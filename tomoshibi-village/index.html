@@ -1,0 +1,1402 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>ともしびの村</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="昼は村を育て、夜は影から灯を守る。街づくりとサバイバルのスマホゲーム">
+<meta name="theme-color" content="#0f1326">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ともしび">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Antique+Soft&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap">
+<style>
+:root{
+  /* Layout: a one-screen night village. Resource strip on top, the lantern-lit map fills the middle,
+     a build tray (day) or skill tray (night) docks at the bottom. One dark world by design. */
+  color-scheme:dark;
+  --night:#0f1326; --night-2:#141933; --panel:#1b2140; --panel-2:#252c50; --line:#343c68;
+  --ink:#f3ead8; --ink-soft:#a9a6c4; --amber:#ffb547; --amber-deep:#c97a14; --amber-ink:#2a1700;
+  --ember:#ff6b3d; --moss:#7fd08a; --danger:#ff6b6b; --violet:#c9a6ff; --violet-deep:#3a2d6e;
+  --font-display:"Zen Antique Soft","Hiragino Mincho ProN","Yu Mincho",serif;
+  --font-body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+}
+html{box-sizing:border-box;height:100%;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);background:var(--night);overscroll-behavior:none}
+*,*::before,*::after{box-sizing:inherit}
+[hidden]{display:none!important}
+body{height:100%;margin:0;overflow:hidden;background:var(--night);color:var(--ink);font-family:var(--font-body);font-size:14px;line-height:1.5;
+  -webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;overscroll-behavior:none;-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit}
+h1,h2,p{margin:0}
+.screen{height:100%;display:flex;flex-direction:column;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.screen>*{width:100%;max-width:560px;margin-inline:auto}
+
+/* buttons */
+.btn{border:0;border-radius:14px;padding:12px 16px;cursor:pointer;touch-action:manipulation;font-weight:900;font-size:15px;line-height:1.3;
+  background:var(--panel-2);color:var(--ink);box-shadow:0 4px 0 #0a0d1c;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  transition:transform .08s ease,box-shadow .08s ease;text-align:center}
+.btn:active:not([disabled]){transform:translateY(3px);box-shadow:0 1px 0 #0a0d1c}
+.btn[disabled]{opacity:.45;cursor:default}
+.btn small{font-size:11.5px;font-weight:700;opacity:.85}
+.btn:focus-visible,.card:focus-visible,.icon-btn:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.btn-amber{background:var(--amber);color:var(--amber-ink);box-shadow:0 4px 0 var(--amber-deep)}
+.btn-amber:active:not([disabled]){box-shadow:0 1px 0 var(--amber-deep)}
+.btn-night{background:linear-gradient(180deg,#4a3a88,#30265e);color:#efe6ff;box-shadow:0 4px 0 #17122e}
+.btn-night:active:not([disabled]){box-shadow:0 1px 0 #17122e}
+.btn-danger{color:var(--danger)}
+.icon-btn{width:40px;height:40px;flex:none;border-radius:12px;border:1px solid var(--line);background:var(--panel);display:grid;place-items:center;cursor:pointer;padding:0;touch-action:manipulation}
+.icon-btn svg{width:20px;height:20px;fill:none;stroke:var(--ink);stroke-width:2.2;stroke-linecap:round}
+
+/* title */
+#title{justify-content:center;align-items:center;text-align:center;gap:20px;padding-block:24px;
+  background:radial-gradient(circle at 50% 34%,rgba(255,181,71,.26),rgba(255,181,71,0) 42%),var(--night)}
+.title-lantern{font-size:68px;line-height:1;filter:drop-shadow(0 0 22px rgba(255,170,60,.85));animation:flicker 3.2s ease-in-out infinite}
+.title-name{font-family:var(--font-display);font-weight:400;font-size:46px;letter-spacing:.14em;line-height:1.2;text-shadow:0 0 30px rgba(255,181,71,.35)}
+.title-story{color:var(--ink-soft);font-size:14px;line-height:1.95}
+.title-actions{display:flex;flex-direction:column;gap:12px;width:100%;max-width:320px}
+.title-actions .btn{padding:15px 16px;font-size:17px}
+.title-best{font-size:12.5px;color:var(--ink-soft)}
+
+/* hud */
+.hud{display:flex;flex-direction:column;gap:6px;padding-block:8px 0}
+.hud-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.day{display:flex;align-items:center;gap:8px}
+.day b{font-family:var(--font-display);font-weight:400;font-size:23px;line-height:1}
+.phase{font-size:12px;font-weight:900;padding:3px 10px;border-radius:99px;background:rgba(255,181,71,.16);color:var(--amber)}
+.phase.night{background:rgba(201,166,255,.16);color:var(--violet)}
+.res{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
+.chip{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:4px 4px 5px;display:flex;flex-direction:column;align-items:center;line-height:1.2;min-width:0}
+.chip .v{font-weight:900;font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.chip .v i{font-style:normal;margin-right:2px}
+.chip .v i.sh{color:var(--amber)}
+.chip .d{font-size:10.5px;font-weight:700;color:var(--ink-soft);font-variant-numeric:tabular-nums;white-space:nowrap}
+.chip .d.up{color:var(--moss)}
+.chip .d.down{color:var(--danger)}
+.chip.flash{animation:chipflash .6s ease}
+.quest{display:flex;align-items:center;gap:10px;min-height:44px;background:linear-gradient(90deg,rgba(255,181,71,.15),rgba(255,181,71,.03));
+  border:1px solid rgba(255,181,71,.32);border-radius:14px;padding:5px 6px 5px 12px;margin-top:6px}
+.quest.nightq{background:linear-gradient(90deg,rgba(201,166,255,.14),rgba(201,166,255,.03));border-color:rgba(201,166,255,.3)}
+.q-main{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.3}
+.q-label{font-size:10.5px;font-weight:900;color:var(--amber);letter-spacing:.12em}
+.nightq .q-label{color:var(--violet)}
+.q-text{font-size:13px;font-weight:700}
+.q-reward{font-size:11px;color:var(--ink-soft);font-weight:700}
+.q-claim{padding:8px 12px;font-size:13px;flex:none}
+
+/* stage */
+.stage{flex:1;min-height:0;position:relative;margin-block:6px;touch-action:none}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.place-hint{position:absolute;left:50%;top:6px;transform:translateX(-50%);display:flex;align-items:center;gap:10px;white-space:nowrap;z-index:2;
+  background:rgba(15,19,38,.92);border:1px solid var(--amber);border-radius:99px;padding:4px 4px 4px 14px;font-size:12.5px;font-weight:700}
+.place-hint button{border:0;border-radius:99px;background:var(--panel-2);padding:6px 12px;font-weight:900;font-size:12px;cursor:pointer}
+.banner{position:absolute;left:0;right:0;top:36%;text-align:center;pointer-events:none;opacity:0;transform:translateY(8px);transition:opacity .45s ease,transform .45s ease;z-index:2}
+.banner.show{opacity:1;transform:none}
+.banner b{display:block;font-family:var(--font-display);font-weight:400;font-size:30px;text-shadow:0 2px 16px #000,0 0 30px rgba(0,0,0,.8)}
+.banner span{display:block;font-size:14px;font-weight:700;color:var(--ink);text-shadow:0 1px 8px #000}
+
+/* panels */
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:9px;margin-bottom:8px;display:flex;flex-direction:column;gap:8px;min-height:150px}
+.cards{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding:2px;-webkit-overflow-scrolling:touch;touch-action:pan-x}
+.cards::-webkit-scrollbar{display:none}
+.card{flex:none;width:78px;border:1px solid var(--line);background:var(--panel-2);border-radius:14px;padding:5px 3px 6px;display:flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer;touch-action:manipulation}
+.card .ic{font-size:24px;line-height:1.25;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
+.card .nm{font-size:11.5px;font-weight:900;white-space:nowrap}
+.card .cs{font-size:10px;font-weight:700;color:var(--ink-soft);white-space:nowrap;font-variant-numeric:tabular-nums}
+.card.poor .cs{color:var(--danger)}
+.card.locked{opacity:.42}
+.card.active{border-color:var(--amber);box-shadow:inset 0 0 0 2px var(--amber)}
+.card.lamp{background:linear-gradient(180deg,#3a2a12,#2a2140);border-color:#6a4e22}
+.panel-row{display:flex;align-items:center;gap:10px}
+.hint{flex:1;min-width:0;font-size:12px;color:var(--ink-soft);line-height:1.45}
+.hint b{color:var(--ink)}
+.hint .warn{color:var(--danger);font-weight:700}
+#nightBtn{flex:none;min-width:128px;padding:10px 14px}
+.lamp-hp{display:flex;align-items:center;gap:8px;font-weight:900;font-size:13px}
+.lamp-hp .bar{flex:1;height:12px;border-radius:99px;background:#2b1b22;overflow:hidden;border:1px solid var(--line)}
+.lamp-hp .bar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,var(--ember),var(--amber));transition:width .15s linear}
+.lamp-hp b{font-variant-numeric:tabular-nums;min-width:74px;text-align:right}
+.skills{display:grid;grid-template-columns:1fr 1fr 58px;gap:8px}
+.skill{position:relative;overflow:hidden;padding:10px 8px}
+.skill .cd{position:absolute;left:0;right:0;bottom:0;height:100%;background:rgba(5,6,14,.62);transform-origin:bottom;transform:scaleY(var(--cd,0));pointer-events:none}
+.skill .sk-t{position:absolute;right:8px;top:6px;font-size:11px;font-weight:900;color:var(--ink)}
+.wave-text{font-size:12px;color:var(--ink-soft);font-weight:700;text-align:center}
+
+/* sheet */
+.sheet-wrap{position:fixed;inset:0;z-index:30;display:flex;align-items:flex-end;justify-content:center;background:rgba(3,4,12,.62);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:calc(16px + env(safe-area-inset-top,0px)) calc(12px + env(safe-area-inset-bottom,0px))}
+.sheet{width:100%;max-width:440px;max-height:100%;overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:18px;
+  display:flex;flex-direction:column;gap:12px;box-shadow:0 -10px 40px rgba(0,0,0,.4);animation:rise .32s cubic-bezier(.2,1.25,.4,1) both}
+.sheet-kicker{font-size:12px;font-weight:900;color:var(--amber);letter-spacing:.1em}
+.sheet-title{font-family:var(--font-display);font-weight:400;font-size:24px;line-height:1.3;display:flex;align-items:center;gap:10px}
+.sheet-title .emo{font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;font-size:30px}
+.sheet-body{display:flex;flex-direction:column;gap:10px;font-size:14px}
+.sheet-body p{line-height:1.7}
+.status{font-size:13px;font-weight:700}
+.status.ok{color:var(--moss)}
+.status.bad{color:var(--danger)}
+.rows{display:flex;flex-direction:column;gap:6px;background:var(--panel-2);border-radius:14px;padding:10px 12px}
+.rows>div{display:flex;justify-content:space-between;gap:12px;font-size:13.5px}
+.rows span{color:var(--ink-soft);font-weight:700}
+.rows b{font-variant-numeric:tabular-nums;text-align:right}
+.rows .total{border-top:1px dashed var(--line);padding-top:6px;margin-top:2px}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.steps li{display:flex;gap:12px}
+.steps .n{width:28px;height:28px;flex:none;border-radius:9px;display:grid;place-items:center;background:var(--panel-2);color:var(--amber);font-weight:900}
+.steps b{display:block}
+.steps p{font-size:13px;color:var(--ink-soft);line-height:1.6}
+.note{font-size:12.5px;color:var(--ink-soft);background:var(--panel-2);border-radius:12px;padding:9px 12px;line-height:1.6}
+.sheet-actions{display:flex;flex-direction:column;gap:8px}
+.sheet-actions.two{display:grid;grid-template-columns:1fr 1fr}
+
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);transform:translate(-50%,-170%);z-index:40;width:max-content;max-width:calc(100% - 32px);
+  background:var(--ink);color:var(--night);font-weight:900;font-size:13px;padding:9px 16px;border-radius:99px;text-align:center;transition:transform .35s cubic-bezier(.2,1.3,.4,1);pointer-events:none}
+.toast.show{transform:translate(-50%,0)}
+
+@keyframes flicker{0%,100%{filter:drop-shadow(0 0 22px rgba(255,170,60,.85))}45%{filter:drop-shadow(0 0 30px rgba(255,170,60,1))}55%{filter:drop-shadow(0 0 16px rgba(255,170,60,.7))}}
+@keyframes rise{0%{transform:translateY(40px);opacity:0}100%{transform:none;opacity:1}}
+@keyframes chipflash{0%{box-shadow:0 0 0 0 rgba(255,181,71,.0)}30%{box-shadow:0 0 0 3px rgba(255,181,71,.7)}100%{box-shadow:0 0 0 0 rgba(255,181,71,0)}}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<section id="title" class="screen" aria-label="タイトル">
+  <div class="title-lantern" aria-hidden="true">🏮</div>
+  <h1 class="title-name">ともしびの村</h1>
+  <p class="title-story">闇におおわれた土地に、最後のともしびが灯った。<br>昼は村を育て、夜は影から灯を守れ。</p>
+  <div class="title-actions">
+    <button class="btn btn-amber" id="continueBtn" type="button" hidden></button>
+    <button class="btn" id="newBtn" type="button">新しい村をはじめる</button>
+  </div>
+  <p class="title-best" id="titleBest"></p>
+</section>
+
+<section id="game" class="screen" aria-label="村" hidden>
+  <header class="hud">
+    <div class="hud-top">
+      <div class="day"><b id="dayNum">1日目</b><span class="phase" id="phase">昼</span></div>
+      <button class="icon-btn" id="menuBtn" type="button" aria-label="メニュー"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button>
+    </div>
+    <div class="res">
+      <div class="chip" id="c-wood"><span class="v"><i>🪵</i><b id="v-wood">0</b></span><span class="d" id="d-wood"></span></div>
+      <div class="chip" id="c-stone"><span class="v"><i>🪨</i><b id="v-stone">0</b></span><span class="d" id="d-stone"></span></div>
+      <div class="chip" id="c-food"><span class="v"><i>🍞</i><b id="v-food">0</b></span><span class="d" id="d-food"></span></div>
+      <div class="chip" id="c-pop"><span class="v"><i>👤</i><b id="v-pop">0</b></span><span class="d" id="d-pop"></span></div>
+      <div class="chip" id="c-shards"><span class="v"><i class="sh">✦</i><b id="v-shards">0</b></span><span class="d" id="d-shards">かけら</span></div>
+    </div>
+  </header>
+  <div class="quest" id="quest">
+    <div class="q-main"><span class="q-label" id="qLabel">目標</span><span class="q-text" id="qText"></span><span class="q-reward" id="qReward"></span></div>
+    <button class="btn btn-amber q-claim" id="qClaim" type="button" hidden>受け取る</button>
+  </div>
+  <div class="stage" id="stage">
+    <canvas id="cv" aria-label="村の地図"></canvas>
+    <div class="place-hint" id="placeHint" hidden><span id="placeText"></span><button id="placeCancel" type="button">やめる</button></div>
+    <div class="banner" id="banner"></div>
+  </div>
+  <div class="panel" id="dayPanel">
+    <div class="cards" id="cards"></div>
+    <div class="panel-row">
+      <p class="hint" id="hint"></p>
+      <button class="btn btn-night" id="nightBtn" type="button"><span>夜を迎える</span><small id="nightSub"></small></button>
+    </div>
+  </div>
+  <div class="panel" id="nightPanel" hidden>
+    <div class="lamp-hp"><span>灯</span><div class="bar"><i id="lampBar"></i></div><b id="lampText"></b></div>
+    <div class="skills">
+      <button class="btn skill" id="skill0" type="button"><span>ひかりの波</span><small>光の中の影に大ダメージ</small><i class="cd"></i><span class="sk-t" id="sk0t"></span></button>
+      <button class="btn skill" id="skill1" type="button"><span>応急修理</span><small>建物と灯を少し回復</small><i class="cd"></i><span class="sk-t" id="sk1t"></span></button>
+      <button class="btn" id="speedBtn" type="button" aria-label="夜の速さ">×1</button>
+    </div>
+    <p class="wave-text" id="waveText"></p>
+  </div>
+</section>
+
+<div class="sheet-wrap" id="sheetWrap" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="sheet-kicker" id="sheetKicker"></div>
+    <h2 class="sheet-title" id="sheetTitle"></h2>
+    <div class="sheet-body" id="sheetBody"></div>
+    <div class="sheet-actions" id="sheetActions"></div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+'use strict';
+document.documentElement.lang = 'ja';
+const $ = (id) => document.getElementById(id);
+const COLS = 9, ROWS = 11, CX = 4, CY = 5, LI = CY * COLS + CX;
+const SAVE_KEY = 'tomoshibi:save:v1', SET_KEY = 'tomoshibi:settings:v1', BEST_KEY = 'tomoshibi:best:v1';
+const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const EMOJI_FONT = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+const fmt = (n) => Math.floor(n).toLocaleString('ja-JP');
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const now = () => performance.now();
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage unavailable */ } },
+  del(k) { try { localStorage.removeItem(k); } catch (e) { /* storage unavailable */ } },
+};
+function dayKey(d = new Date()) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+function hashStr(s) { let h = 2166136261 >>> 0; for (const ch of String(s)) { h ^= ch.codePointAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+function makeRand(seed) {
+  let s = seed >>> 0;
+  return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+
+/* ================= data ================= */
+const RES = { wood: '🪵', stone: '🪨', food: '🍞', shards: '✦' };
+const RES_KEYS = ['wood', 'stone', 'food', 'shards'];
+const DEF = {
+  house: { name: '家', icons: ['🛖', '🏠', '🏡'], terrain: ['g'], workers: 0, unlock: 1, hp: [40, 60, 80], cat: 'home',
+    cost: [{ wood: 20 }, { wood: 30, stone: 10 }, { wood: 45, stone: 25 }], cap: [3, 5, 7],
+    desc: '住める人数が増える。空きがあれば、毎朝新しい住民がやってくる。' },
+  farm: { name: '畑', icons: ['🌱', '🌾', '🌽'], terrain: ['g'], workers: 1, unlock: 1, hp: [30, 45, 60], cat: 'prod',
+    cost: [{ wood: 15 }, { wood: 25, stone: 5 }, { wood: 40, stone: 15 }], prod: { food: [7, 12, 18] },
+    desc: '毎朝、食料がとれる。住民は1人につき毎日1つ食料を食べる。' },
+  lumber: { name: '木こり小屋', icons: ['🪓', '🪓', '🪓'], terrain: ['f'], workers: 1, unlock: 1, hp: [35, 50, 65], cat: 'prod',
+    cost: [{ wood: 10 }, { wood: 25, stone: 8 }, { wood: 40, stone: 20 }], prod: { wood: [14, 22, 32] },
+    desc: '森のマスに建てる。毎朝、木がとれる。' },
+  quarry: { name: '石切り場', icons: ['⛏️', '⛏️', '⛏️'], terrain: ['r'], workers: 1, unlock: 1, hp: [40, 60, 80], cat: 'prod',
+    cost: [{ wood: 25 }, { wood: 30, stone: 10 }, { wood: 45, stone: 25 }], prod: { stone: [8, 13, 19] },
+    desc: '岩場のマスに建てる。毎朝、石がとれる。' },
+  wall: { name: '柵', lvNames: ['木の柵', '石の壁', '鉄の壁'], icons: ['🚧', '🧱', '🛡️'], terrain: ['g', 'f', 'r'], workers: 0, unlock: 1, hp: [70, 180, 350], cat: 'wall',
+    cost: [{ wood: 6 }, { stone: 12 }, { stone: 25, shards: 3 }],
+    desc: '影の通り道をふさぐ。夜にこわれても、がれきになるだけで朝に修理できる。' },
+  tower: { name: '見張り塔', icons: ['🏹', '🏹', '🏹'], terrain: ['g'], workers: 1, unlock: 1, hp: [60, 90, 130], cat: 'def',
+    cost: [{ wood: 25, stone: 8 }, { wood: 40, stone: 25, shards: 10 }, { wood: 60, stone: 45, shards: 25 }],
+    atk: { dmg: [6, 10, 16], range: [2.6, 2.9, 3.2], rate: [1.0, 0.85, 0.7] },
+    desc: '近くの影を矢で射る。見張り番の住民が1人必要。' },
+  catapult: { name: '投石台', icons: ['☄️', '☄️', '☄️'], terrain: ['g'], workers: 1, unlock: 3, hp: [60, 90, 130], cat: 'def',
+    cost: [{ wood: 40, stone: 30, shards: 10 }, { wood: 55, stone: 45, shards: 20 }, { wood: 80, stone: 70, shards: 35 }],
+    atk: { dmg: [11, 17, 26], range: [3.0, 3.3, 3.6], rate: [2.4, 2.2, 2.0], splash: 0.95 },
+    desc: '石を投げて、まとまった影をまとめて倒す。住民が1人必要。' },
+  brazier: { name: 'かがり火', icons: ['🔥', '🔥', '🔥'], terrain: ['g'], workers: 0, unlock: 4, hp: [50, 75, 100], cat: 'def',
+    cost: [{ wood: 40, stone: 20, shards: 10 }, { wood: 60, stone: 30, shards: 20 }, { wood: 80, stone: 45, shards: 30 }],
+    aura: { r: [1.6, 1.9, 2.2], slow: [0.5, 0.45, 0.4], dps: [3, 5, 8] },
+    desc: 'まわりを照らし、近づいた影を遅くして焼く。住民はいらない。' },
+};
+const BUILD_ORDER = ['house', 'farm', 'lumber', 'quarry', 'wall', 'tower', 'catapult', 'brazier'];
+const STAFF_ORDER = ['farm', 'lumber', 'quarry', 'tower', 'catapult'];
+const TERRAIN_NAME = { g: '草地', f: '森', r: '岩場' };
+const LANTERN = {
+  name: '大灯籠', icon: '🏮', max: 8,
+  hp: [200, 260, 340, 430, 530, 640, 760, 890], radius: [2.5, 3.0, 3.5, 4.0, 4.6, 5.2, 5.8, 6.5],
+  dmg: [8, 10, 12, 15, 18, 22, 26, 30], range: [2.5, 2.6, 2.7, 2.9, 3.1, 3.3, 3.5, 3.7],
+  cost: [null, { wood: 40, stone: 15, shards: 6 }, { wood: 90, stone: 40, shards: 20 }, { wood: 130, stone: 70, shards: 35 },
+    { wood: 190, stone: 110, shards: 55 }, { wood: 260, stone: 160, shards: 80 }, { wood: 340, stone: 220, shards: 110 }, { wood: 440, stone: 300, shards: 150 }],
+};
+const FOES = {
+  shade: { name: '影', hp: 14, spd: 0.5, atk: 5, r: 0.27, drop: 1 },
+  runner: { name: '速い影', hp: 8, spd: 0.95, atk: 3, r: 0.21, drop: 1 },
+  brute: { name: '大きな影', hp: 45, spd: 0.32, atk: 14, r: 0.38, drop: 3 },
+  boss: { name: '夜の主', hp: 160, spd: 0.24, atk: 22, r: 0.58, drop: 20 },
+};
+const hpScale = (d) => 1 + 0.1 * (d - 1) + 0.004 * (d - 1) * (d - 1);
+const SKILLS = [{ name: 'ひかりの波', cd: 22 }, { name: '応急修理', cd: 35 }];
+const TIPS = [
+  '建物をタップすると、強化や修理ができます。',
+  '柵で村をぐるりと囲むと、影の足止めになります。',
+  '大灯籠を強化すると光が広がり、建てられる場所が増えます。',
+  '見張り塔や投石台は、住民がいないと動きません。',
+  '夜は影をタップしても攻撃できます。',
+  '影は大灯籠をめざして、まっすぐ進んできます。',
+];
+const QUESTS = [
+  { text: '家を建てよう', done: () => count('house') >= 1, reward: { wood: 15 } },
+  { text: '畑を建てよう', done: () => count('farm') >= 1, reward: { food: 10 } },
+  { text: '1日目の夜を乗り切ろう', done: () => S.day >= 2, reward: { shards: 5 } },
+  { text: '森に木こり小屋を建てよう', done: () => count('lumber') >= 1, reward: { wood: 20 } },
+  { text: '見張り塔を建てよう', done: () => count('tower') >= 1, reward: { stone: 10 } },
+  { text: '岩場に石切り場を建てよう', done: () => count('quarry') >= 1, reward: { stone: 15 } },
+  { text: '柵を4つ建てよう', done: () => count('wall') >= 4, reward: { wood: 15 } },
+  { text: '大灯籠をLv2にしよう', done: () => lanternLv() >= 2, reward: { shards: 10 } },
+  { text: '住民を10人にしよう', done: () => S.pop >= 10, reward: { food: 25 } },
+  { text: '5日目の夜を乗り切ろう', done: () => S.day >= 6, reward: { shards: 20 } },
+  { text: '大灯籠をLv3にしよう', done: () => lanternLv() >= 3, reward: { wood: 60, stone: 30 } },
+  { text: '投石台を建てよう', done: () => count('catapult') >= 1, reward: { shards: 15 } },
+  { text: '石の壁（柵Lv2）を3つにしよう', done: () => countLv('wall', 2) >= 3, reward: { stone: 30 } },
+  { text: '10日目の夜を乗り切ろう', done: () => S.day >= 11, reward: { shards: 40 } },
+  { text: '大灯籠をLv5にしよう', done: () => lanternLv() >= 5, reward: { wood: 120, stone: 80 } },
+  { text: '住民を25人にしよう', done: () => S.pop >= 25, reward: { food: 60 } },
+  { text: '15日目の夜を乗り切ろう', done: () => S.day >= 16, reward: { shards: 60 } },
+  { text: '大灯籠を最大のLv8にしよう', done: () => lanternLv() >= 8, reward: { shards: 100 } },
+  { text: '20日目の夜を乗り切ろう', done: () => S.day >= 21, reward: { wood: 200, stone: 200 } },
+  { text: '30日目の夜を乗り切ろう', done: () => S.day >= 31, reward: { shards: 200 } },
+];
+const EVENTS = [
+  { id: 'family', w: 3, cond: () => S.pop < capacity(), title: '旅の家族', text: '影から逃げてきた家族が、村に入れてほしいと言っている。',
+    choices: [
+      { label: '迎え入れる', sub: () => `🍞-10 ・ 住民+${Math.min(3, capacity() - S.pop)}人`, ok: () => S.res.food >= 10,
+        act: () => { S.res.food -= 10; const n = Math.min(3, capacity() - S.pop); S.pop += n; return `${n}人が村の仲間になった`; } },
+      { label: '断る', act: () => '家族は霧の向こうへ去っていった' }] },
+  { id: 'trader', w: 3, cond: () => S.day >= 2, title: '行商人', text: '荷車を引いた行商人がやってきた。「交換していかないかい？」',
+    choices: [
+      { label: '🪵30 を 🪨15 と交換', ok: () => S.res.wood >= 30, act: () => { S.res.wood -= 30; S.res.stone += 15; return '石を手に入れた'; } },
+      { label: '🪨20 を 🪵40 と交換', ok: () => S.res.stone >= 20, act: () => { S.res.stone -= 20; S.res.wood += 40; return '木を手に入れた'; } },
+      { label: '見送る', act: () => '行商人は次の村へ向かった' }] },
+  { id: 'cache', w: 2, title: '古い倉庫', text: '灯りの届く場所で、昔の開拓者が残した倉庫を見つけた。',
+    choices: [{ label: '中身をもらう', sub: () => `🪵+${15 + S.day * 2} 🪨+${8 + S.day}`, act: () => { const w = 15 + S.day * 2, s = 8 + S.day; S.res.wood += w; S.res.stone += s; return `🪵+${w} 🪨+${s}`; } }] },
+  { id: 'fog', w: 2, cond: () => S.day >= 3, title: '濃い霧', text: '今夜は霧がとても濃い。影がいつもより多く来るが、かけらも多く落とすだろう。',
+    choices: [{ label: '身構える', sub: () => '今夜：影が1.4倍 ・ かけら2倍', act: () => { S.tonight = { count: 1.4, shards: 2 }; return '見張りを増やして夜に備えた'; } }] },
+  { id: 'harvest', w: 2, cond: () => count('farm') > 0, title: '豊作', text: '畑が思いがけず豊作だった。',
+    choices: [{ label: '収穫する', sub: () => `🍞+${6 * count('farm')}`, act: () => { const f = 6 * count('farm'); S.res.food += f; return `🍞+${f}`; } }] },
+  { id: 'rats', w: 2, cond: () => S.res.food >= 20, title: '食料庫のねずみ', text: '食料庫にねずみが入りこんだ。',
+    choices: [
+      { label: '罠を作る', sub: () => '🪵-10', ok: () => S.res.wood >= 10, act: () => { S.res.wood -= 10; return 'ねずみを追い払った'; } },
+      { label: '放っておく', sub: () => '食料が3割へる', act: () => { const l = Math.floor(S.res.food * 0.3); S.res.food -= l; return `🍞-${l}`; } }] },
+  { id: 'star', w: 2, title: '流れ星', text: '夜明け前、光のかけらが空から降ってきた。',
+    choices: [{ label: '拾い集める', sub: () => `✦+${5 + Math.floor(S.day / 2)}`, act: () => { const n = 5 + Math.floor(S.day / 2); S.res.shards += n; return `✦+${n}`; } }] },
+  { id: 'sick', w: 1, cond: () => S.pop >= 6, title: '流行り病', text: '何人かの住民が熱を出している。',
+    choices: [
+      { label: '薬草を煎じる', sub: () => '🍞-15', ok: () => S.res.food >= 15, act: () => { S.res.food -= 15; return 'みんな元気になった'; } },
+      { label: '様子を見る', sub: () => '住民-1', act: () => { S.pop -= 1; return '1人が村を去った'; } }] },
+];
+
+/* ================= helpers on state ================= */
+let S = null;
+let STAFF = { staffed: new Set(), free: 0, need: 0 };
+const tileXY = (i) => [i % COLS, (i / COLS) | 0];
+const lanternB = () => S.grid[LI].b;
+const lanternLv = () => lanternB().lv;
+const lightR = () => LANTERN.radius[lanternLv() - 1];
+const inLight = (i) => { const [c, r] = tileXY(i); return Math.hypot(c - CX, r - CY) <= lightR() + 0.01; };
+const maxHp = (b) => (b.k === 'lantern' ? LANTERN.hp[b.lv - 1] : DEF[b.k].hp[b.lv - 1]);
+const maxLv = () => Math.min(3, lanternLv());
+const count = (k) => S.grid.reduce((n, t) => n + (t.b && t.b.k === k ? 1 : 0), 0);
+const countLv = (k, lv) => S.grid.reduce((n, t) => n + (t.b && t.b.k === k && t.b.lv >= lv ? 1 : 0), 0);
+const bName = (b) => (b.k === 'lantern' ? LANTERN.name : b.k === 'wall' ? DEF.wall.lvNames[b.lv - 1] : DEF[b.k].name);
+const bIcon = (b) => (b.k === 'lantern' ? LANTERN.icon : DEF[b.k].icons[b.lv - 1]);
+function capacity() { let c = 5 + 2 * (lanternLv() - 1); S.grid.forEach((t) => { const b = t.b; if (b && b.k === 'house' && !b.broken) c += DEF.house.cap[b.lv - 1]; }); return c; }
+function staffing() {
+  const staffed = new Set(); let free = S.pop, need = 0;
+  for (const k of STAFF_ORDER) {
+    S.grid.forEach((t, i) => {
+      const b = t.b; if (!b || b.k !== k || b.broken) return;
+      const w = DEF[k].workers; need += w;
+      if (free >= w) { free -= w; staffed.add(i); }
+    });
+  }
+  return { staffed, free, need };
+}
+function production() {
+  const p = { wood: 0, stone: 0, food: 0 };
+  S.grid.forEach((t, i) => {
+    const b = t.b; if (!b || b.broken || !STAFF.staffed.has(i)) return;
+    const pr = DEF[b.k].prod; if (!pr) return;
+    for (const k in pr) p[k] += pr[k][b.lv - 1];
+  });
+  return p;
+}
+const costStr = (c) => RES_KEYS.filter((k) => c[k]).map((k) => `${RES[k]}${c[k]}`).join(' ');
+const canAfford = (c) => RES_KEYS.every((k) => !c[k] || S.res[k] >= c[k]);
+function pay(c) { RES_KEYS.forEach((k) => { if (c[k]) S.res[k] -= c[k]; }); }
+function gain(c) { RES_KEYS.forEach((k) => { if (c[k]) S.res[k] += c[k]; }); }
+const lackStr = (c) => RES_KEYS.filter((k) => c[k] && S.res[k] < c[k]).map((k) => `${RES[k]}あと${c[k] - S.res[k]}`).join(' ');
+function canPlaceAt(k, i) { const t = S.grid[i]; return !t.b && inLight(i) && DEF[k].terrain.includes(t.t); }
+
+/* ================= terrain & game creation ================= */
+function genTerrain(seed) {
+  const rand = makeRand(seed);
+  const t = Array(COLS * ROWS).fill('g');
+  const dist = (i) => { const [c, r] = tileXY(i); return Math.hypot(c - CX, r - CY); };
+  const blob = (n, kind, rmin, rmax) => {
+    for (let k = 0; k < n; k++) {
+      let x, y;
+      do { x = rand() * COLS; y = rand() * ROWS; } while (Math.hypot(x - CX - 0.5, y - CY - 0.5) < 2);
+      const rad = rmin + rand() * (rmax - rmin);
+      for (let i = 0; i < t.length; i++) {
+        const [c, r] = tileXY(i);
+        if (Math.hypot(c + 0.5 - x, r + 0.5 - y) < rad * (0.75 + rand() * 0.5)) t[i] = kind;
+      }
+    }
+  };
+  blob(4, 'f', 1.0, 1.8);
+  blob(3, 'r', 0.8, 1.3);
+  for (let i = 0; i < t.length; i++) if (dist(i) < 1.5) t[i] = 'g';
+  const near = []; for (let i = 0; i < t.length; i++) { const d = dist(i); if (d >= 1.5 && d <= 2.5) near.push(i); }
+  for (let i = near.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [near[i], near[j]] = [near[j], near[i]]; }
+  const ensure = (kind, n) => { let have = near.filter((i) => t[i] === kind).length; for (const i of near) { if (have >= n) break; if (t[i] === 'g') { t[i] = kind; have++; } } };
+  ensure('f', 2); ensure('r', 1);
+  let grassNear = near.filter((i) => t[i] === 'g').length;
+  for (const i of near) { if (grassNear >= 6) break; if (t[i] !== 'g') { t[i] = 'g'; grassNear++; } }
+  return t.map((k) => ({ t: k, b: null }));
+}
+function newGame() {
+  const seed = (Math.random() * 4294967296) >>> 0;
+  const grid = genTerrain(seed);
+  grid[LI].b = { k: 'lantern', lv: 1, hp: LANTERN.hp[0], broken: false };
+  S = { v: 1, seed, day: 1, res: { wood: 80, stone: 20, food: 30, shards: 0 }, pop: 5, grid, quest: 0,
+    stats: { kills: 0 }, tonight: null, lastSupply: dayKey(), pendingEvent: null, snap: null };
+  S.snap = snapStr();
+  save();
+}
+const snapStr = () => JSON.stringify({ ...S, snap: null });
+function restoreSnap() { const snap = S.snap; S = JSON.parse(snap); S.snap = snap; }
+function save() { if (S) store.set(SAVE_KEY, S); }
+function loadGame() {
+  const s = store.get(SAVE_KEY, null);
+  if (!s || !Array.isArray(s.grid) || s.grid.length !== COLS * ROWS || !s.grid[LI].b || s.grid[LI].b.k !== 'lantern') return null;
+  if (!s.snap) s.snap = JSON.stringify({ ...s, snap: null });
+  return s;
+}
+let SET = { sound: true, speed: 1, ...store.get(SET_KEY, {}) };
+const saveSet = () => store.set(SET_KEY, SET);
+let best = Number(store.get(BEST_KEY, 0)) || 0;
+
+/* ================= sound & haptics ================= */
+const sfx = (() => {
+  let ac = null, master = null; const last = {};
+  function ensure() {
+    if (!SET.sound) return null;
+    if (!ac) {
+      try { ac = new (window.AudioContext || window.webkitAudioContext)(); master = ac.createGain(); master.gain.value = 0.3; master.connect(ac.destination); }
+      catch (e) { ac = null; return null; }
+    }
+    if (ac.state === 'suspended') ac.resume().catch(() => {});
+    return ac;
+  }
+  function tone(f, d, type = 'sine', vol = 0.3, when = 0, slide = 0) {
+    const a = ensure(); if (!a) return;
+    const t = a.currentTime + when, o = a.createOscillator(), g = a.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + d);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t + d + 0.03);
+  }
+  function noise(d, vol, when = 0, freq = 800) {
+    const a = ensure(); if (!a) return;
+    const len = Math.max(1, Math.floor(a.sampleRate * d)), buf = a.createBuffer(1, len, a.sampleRate), data = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    const src = a.createBufferSource(), bp = a.createBiquadFilter(), g = a.createGain();
+    src.buffer = buf; bp.type = 'bandpass'; bp.frequency.value = freq; g.gain.value = vol;
+    src.connect(bp); bp.connect(g); g.connect(master); src.start(a.currentTime + when);
+  }
+  const ok = (k, ms) => { const t = performance.now(); if (last[k] && t - last[k] < ms) return false; last[k] = t; return true; };
+  return {
+    unlock() { ensure(); },
+    tap() { tone(620, 0.05, 'triangle', 0.12); },
+    build() { noise(0.12, 0.5, 0, 500); tone(150, 0.14, 'triangle', 0.35, 0, 90); },
+    upgrade() { [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.24, 'triangle', 0.22, i * 0.07)); },
+    coin() { tone(1318, 0.07, 'square', 0.08); tone(1760, 0.14, 'square', 0.07, 0.06); },
+    night() { tone(110, 1.8, 'sine', 0.35, 0, 80); tone(660, 1.4, 'triangle', 0.14, 0.05); tone(990, 1.1, 'triangle', 0.06, 0.1); },
+    shoot() { if (ok('s', 70)) tone(900, 0.06, 'triangle', 0.06, 0, 520); },
+    beam() { if (ok('b', 90)) tone(1320, 0.09, 'sine', 0.05, 0, 990); },
+    toss() { if (ok('t', 90)) noise(0.08, 0.14, 0, 320); },
+    boom() { if (ok('bo', 80)) { noise(0.22, 0.32, 0, 180); tone(90, 0.2, 'sine', 0.22, 0, 50); } },
+    hit() { if (ok('h', 120)) noise(0.05, 0.1, 0, 1300); },
+    kill() { if (ok('k', 50)) tone(520, 0.15, 'sine', 0.1, 0, 170); },
+    brk() { noise(0.32, 0.45, 0, 240); tone(120, 0.26, 'sawtooth', 0.1, 0, 60); },
+    lamp() { if (ok('l', 280)) tone(80, 0.2, 'sine', 0.32, 0, 55); },
+    wave() { tone(300, 0.45, 'sine', 0.22, 0, 1200); [784, 988, 1175].forEach((f, i) => tone(f, 0.32, 'triangle', 0.13, 0.1 + i * 0.06)); },
+    heal() { [659, 784, 988, 1319].forEach((f, i) => tone(f, 0.26, 'sine', 0.13, i * 0.08)); },
+    zap() { if (ok('z', 60)) tone(1500, 0.07, 'square', 0.05, 0, 700); },
+    victory() { [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, 0.38, 'triangle', 0.22, i * 0.11)); },
+    defeat() { [392, 349, 311, 262].forEach((f, i) => tone(f, 0.5, 'sine', 0.22, i * 0.2)); },
+  };
+})();
+function haptic(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) { /* unsupported */ } }
+
+/* ================= UI helpers ================= */
+const toastQ = []; let toastBusy = false;
+function toast(msg) { toastQ.length = 0; toastQ.push(msg); if (!toastBusy) nextToast(); }
+function nextToast() {
+  const m = toastQ.shift(); if (!m) { toastBusy = false; return; }
+  toastBusy = true; const el = $('toast'); el.textContent = m; el.classList.add('show');
+  setTimeout(() => { el.classList.remove('show'); setTimeout(nextToast, 360); }, 2000);
+}
+let bannerT = 0;
+function banner(main, sub = '') {
+  const el = $('banner');
+  el.innerHTML = `<b>${main}</b>${sub ? `<span>${sub}</span>` : ''}`;
+  el.classList.add('show'); clearTimeout(bannerT);
+  bannerT = setTimeout(() => el.classList.remove('show'), 2000);
+}
+function flashChip(keys) { keys.forEach((k) => { const el = $('c-' + k); if (!el) return; el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }); }
+let sheetClose = null, sheetDismissable = true;
+function openSheet({ kicker = '', title = '', icon = '', html = '', actions = [], layout = '', dismissable = true, onClose = null }) {
+  $('sheetKicker').textContent = kicker; $('sheetKicker').hidden = !kicker;
+  $('sheetTitle').innerHTML = (icon ? `<span class="emo" aria-hidden="true">${icon}</span>` : '') + `<span>${title}</span>`;
+  $('sheetBody').innerHTML = html; $('sheetBody').hidden = !html;
+  const box = $('sheetActions'); box.className = 'sheet-actions' + (layout ? ' ' + layout : ''); box.textContent = '';
+  actions.forEach((a) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'btn ' + (a.cls || '');
+    b.innerHTML = `<span>${a.label}</span>${a.sub ? `<small>${a.sub}</small>` : ''}`;
+    b.disabled = !!a.disabled;
+    b.addEventListener('click', () => { sfx.tap(); const keep = a.onClick ? a.onClick(b) : undefined; if (keep !== false && !$('sheetWrap').hidden && box.contains(b)) closeSheet(); });
+    box.appendChild(b);
+  });
+  sheetClose = onClose; sheetDismissable = dismissable;
+  $('sheetWrap').hidden = false;
+}
+function closeSheet() { if ($('sheetWrap').hidden) return; $('sheetWrap').hidden = true; const f = sheetClose; sheetClose = null; if (f) f(); }
+$('sheetWrap').addEventListener('click', (e) => { if (e.target === $('sheetWrap') && sheetDismissable) closeSheet(); });
+
+/* ================= canvas & rendering ================= */
+const cv = $('cv'), ctx = cv.getContext('2d'), stage = $('stage');
+let DPR = 1, CW = 0, CH = 0, cs = 30, mx = 0, my = 0, terrainC = null, fogC = null, fogX = null;
+let mode = 'title', placing = null, selected = -1, dusk = 0, duskTarget = 0, rafId = 0, lastT = 0, lampHurt = 0;
+const fx = { parts: [], floats: [], rings: [] };
+const popAt = new Map();
+const emoCache = new Map();
+let night = null;
+
+function resize() {
+  const r = stage.getBoundingClientRect();
+  if (r.width < 20 || r.height < 20) return;
+  DPR = Math.min(3, window.devicePixelRatio || 1);
+  CW = r.width; CH = r.height;
+  cv.width = Math.round(CW * DPR); cv.height = Math.round(CH * DPR);
+  cs = Math.floor(Math.min(CW / COLS, CH / ROWS));
+  mx = Math.round((CW - cs * COLS) / 2); my = Math.round((CH - cs * ROWS) / 2);
+  terrainC = null; emoCache.clear();
+  fogC = document.createElement('canvas'); fogC.width = cv.width; fogC.height = cv.height; fogX = fogC.getContext('2d');
+}
+const X = (u) => mx + u * cs, Y = (v) => my + v * cs;
+function rr(c, x, y, w, h, r) {
+  r = Math.max(0, Math.min(r, w / 2, h / 2));
+  c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
+}
+function emo(ch, size) {
+  const s = Math.max(8, Math.round(size)), k = ch + '|' + s + '|' + DPR;
+  let c = emoCache.get(k);
+  if (!c) {
+    c = document.createElement('canvas'); c.width = c.height = Math.ceil(s * DPR * 1.25);
+    const g = c.getContext('2d'); g.scale(DPR, DPR);
+    g.font = `${s}px ${EMOJI_FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(ch, s * 0.625, s * 0.67);
+    emoCache.set(k, c);
+  }
+  return c;
+}
+function drawEmo(ch, cx, cy, size, alpha = 1) {
+  const c = emo(ch, size), w = c.width / DPR;
+  ctx.globalAlpha = alpha; ctx.drawImage(c, cx - w / 2, cy - w / 2, w, w); ctx.globalAlpha = 1;
+}
+function buildTerrain() {
+  const c = document.createElement('canvas');
+  c.width = Math.round(COLS * cs * DPR); c.height = Math.round(ROWS * cs * DPR);
+  const g = c.getContext('2d'); g.scale(DPR, DPR);
+  const rand = makeRand(S.seed ^ 0x9e3779b9);
+  for (let i = 0; i < S.grid.length; i++) {
+    const [cc, r] = tileXY(i), x = cc * cs, y = r * cs, t = S.grid[i].t;
+    g.fillStyle = t === 'r' ? ((cc + r) % 2 ? '#5f7f4f' : '#5b7a4b') : t === 'f' ? ((cc + r) % 2 ? '#3f7a3e' : '#3b743a') : ((cc + r) % 2 ? '#5c9a4c' : '#579347');
+    g.fillRect(x, y, cs + 0.5, cs + 0.5);
+    g.strokeStyle = 'rgba(20,50,20,.35)'; g.lineWidth = 1;
+    for (let k = 0; k < 3; k++) {
+      const tx = x + rand() * cs, ty = y + rand() * cs;
+      g.beginPath(); g.moveTo(tx, ty); g.lineTo(tx - 1.5, ty - 4); g.moveTo(tx + 2, ty); g.lineTo(tx + 3, ty - 3.5); g.stroke();
+    }
+    if (t === 'f') {
+      const spots = [[0.3, 0.42], [0.7, 0.36], [0.5, 0.75]];
+      for (const [px, py] of spots) {
+        const tx = x + (px + (rand() - 0.5) * 0.12) * cs, ty = y + (py + (rand() - 0.5) * 0.1) * cs, h = cs * (0.42 + rand() * 0.12);
+        g.fillStyle = '#5a3b22'; g.fillRect(tx - cs * 0.03, ty + h * 0.2, cs * 0.06, h * 0.25);
+        g.fillStyle = '#1f5a2c'; g.beginPath(); g.moveTo(tx, ty - h * 0.55); g.lineTo(tx + h * 0.36, ty + h * 0.25); g.lineTo(tx - h * 0.36, ty + h * 0.25); g.closePath(); g.fill();
+        g.fillStyle = '#2b7038'; g.beginPath(); g.moveTo(tx, ty - h * 0.75); g.lineTo(tx + h * 0.26, ty - h * 0.05); g.lineTo(tx - h * 0.26, ty - h * 0.05); g.closePath(); g.fill();
+      }
+    } else if (t === 'r') {
+      const rocks = [[0.36, 0.55, 0.26], [0.66, 0.62, 0.2], [0.55, 0.32, 0.15]];
+      for (const [px, py, s] of rocks) {
+        const rx = x + px * cs, ry = y + py * cs, rs = s * cs;
+        g.fillStyle = '#6d7180'; g.beginPath();
+        g.moveTo(rx - rs, ry + rs * 0.5); g.lineTo(rx - rs * 0.7, ry - rs * 0.4); g.lineTo(rx, ry - rs * 0.75); g.lineTo(rx + rs * 0.8, ry - rs * 0.3); g.lineTo(rx + rs, ry + rs * 0.5); g.closePath(); g.fill();
+        g.fillStyle = '#8d92a3'; g.beginPath(); g.moveTo(rx - rs * 0.7, ry - rs * 0.4); g.lineTo(rx, ry - rs * 0.75); g.lineTo(rx + rs * 0.8, ry - rs * 0.3); g.lineTo(rx + rs * 0.1, ry - rs * 0.05); g.closePath(); g.fill();
+      }
+    }
+  }
+  g.strokeStyle = 'rgba(0,0,0,.08)'; g.lineWidth = 1;
+  for (let cc = 1; cc < COLS; cc++) { g.beginPath(); g.moveTo(cc * cs, 0); g.lineTo(cc * cs, ROWS * cs); g.stroke(); }
+  for (let r = 1; r < ROWS; r++) { g.beginPath(); g.moveTo(0, r * cs); g.lineTo(COLS * cs, r * cs); g.stroke(); }
+  terrainC = c;
+}
+function isWall(c, r) { if (c < 0 || r < 0 || c >= COLS || r >= ROWS) return false; const b = S.grid[r * COLS + c].b; return !!(b && b.k === 'wall' && !b.broken); }
+function drawWall(i, b) {
+  const [c, r] = tileXY(i), x = X(c), y = Y(r), m = cs * 0.24;
+  if (b.broken) { drawRubble(x, y); return; }
+  const base = ['#8a5a30', '#7c8496', '#4e586c'][b.lv - 1], top = ['#a8743f', '#9aa2b4', '#6c7890'][b.lv - 1];
+  const rects = [[x + m, y + m, cs - 2 * m, cs - 2 * m]];
+  if (isWall(c, r - 1)) rects.push([x + m, y, cs - 2 * m, m]);
+  if (isWall(c, r + 1)) rects.push([x + m, y + cs - m, cs - 2 * m, m]);
+  if (isWall(c - 1, r)) rects.push([x, y + m, m, cs - 2 * m]);
+  if (isWall(c + 1, r)) rects.push([x + cs - m, y + m, m, cs - 2 * m]);
+  ctx.fillStyle = 'rgba(0,0,0,.3)'; for (const q of rects) ctx.fillRect(q[0], q[1] + cs * 0.06, q[2], q[3]);
+  ctx.fillStyle = base; for (const q of rects) ctx.fillRect(q[0], q[1], q[2], q[3]);
+  ctx.fillStyle = top; for (const q of rects) ctx.fillRect(q[0], q[1], q[2], Math.max(2, q[3] * 0.3));
+  ctx.strokeStyle = 'rgba(0,0,0,.28)'; ctx.lineWidth = 1;
+  if (b.lv === 1) { for (let k = 1; k < 4; k++) { const lx = x + m + (cs - 2 * m) * k / 4; ctx.beginPath(); ctx.moveTo(lx, y + m); ctx.lineTo(lx, y + cs - m); ctx.stroke(); } }
+  else if (b.lv === 2) { ctx.beginPath(); ctx.moveTo(x + m, y + cs / 2); ctx.lineTo(x + cs - m, y + cs / 2); ctx.moveTo(x + cs / 2, y + m); ctx.lineTo(x + cs / 2, y + cs / 2); ctx.stroke(); }
+  else { ctx.fillStyle = '#c9d2e3'; for (const [px, py] of [[0.36, 0.36], [0.64, 0.36], [0.36, 0.64], [0.64, 0.64]]) { ctx.beginPath(); ctx.arc(x + px * cs, y + py * cs, cs * 0.04, 0, 7); ctx.fill(); } }
+}
+function drawRubble(x, y) {
+  ctx.fillStyle = '#4a4552';
+  for (const [px, py, s] of [[0.32, 0.6, 0.16], [0.6, 0.66, 0.13], [0.5, 0.45, 0.1], [0.7, 0.42, 0.08]]) { ctx.beginPath(); ctx.arc(x + px * cs, y + py * cs, s * cs, 0, 7); ctx.fill(); }
+  ctx.fillStyle = '#6a6474'; ctx.beginPath(); ctx.arc(x + 0.36 * cs, y + 0.56 * cs, 0.07 * cs, 0, 7); ctx.fill();
+}
+function drawBuilding(i, b, t) {
+  const [c, r] = tileXY(i); const x = X(c), y = Y(r);
+  if (b.k === 'wall') return drawWall(i, b);
+  if (b.k === 'lantern') return drawLantern(x, y, b, t);
+  const d = DEF[b.k], pad = cs * 0.07;
+  let sc = 1; const pt = popAt.get(i);
+  if (pt !== undefined) { const k = (t - pt) / 320; if (k >= 1) popAt.delete(i); else sc = 1 + 0.25 * Math.sin(Math.PI * k) * (1 - k); }
+  ctx.save(); ctx.translate(x + cs / 2, y + cs / 2); ctx.scale(sc, sc); ctx.translate(-cs / 2, -cs / 2);
+  if (b.broken) { drawRubble(0, 0); drawEmo(bIcon(b), cs / 2, cs * 0.42, cs * 0.5, 0.3); ctx.restore(); return; }
+  const plate = d.cat === 'def' ? ['#3d4762', '#55618a'] : d.cat === 'home' ? ['#7a5a38', '#9a764c'] : ['#5e4630', '#7c5e40'];
+  ctx.fillStyle = 'rgba(0,0,0,.32)'; rr(ctx, pad, pad + cs * 0.06, cs - pad * 2, cs - pad * 2, cs * 0.18); ctx.fill();
+  ctx.fillStyle = plate[0]; rr(ctx, pad, pad, cs - pad * 2, cs - pad * 2, cs * 0.18); ctx.fill();
+  ctx.fillStyle = plate[1]; rr(ctx, pad, pad, cs - pad * 2, (cs - pad * 2) * 0.45, cs * 0.18); ctx.fill();
+  drawEmo(bIcon(b), cs / 2, cs * 0.47, cs * 0.6);
+  for (let l = 0; l < b.lv; l++) { ctx.fillStyle = '#ffcf6b'; ctx.beginPath(); ctx.arc(cs / 2 + (l - (b.lv - 1) / 2) * cs * 0.13, cs * 0.84, cs * 0.045, 0, 7); ctx.fill(); }
+  if (d.workers && !STAFF.staffed.has(i)) {
+    ctx.fillStyle = 'rgba(15,19,38,.85)'; ctx.beginPath(); ctx.arc(cs * 0.8, cs * 0.2, cs * 0.16, 0, 7); ctx.fill();
+    ctx.fillStyle = '#ff9b9b'; ctx.font = `900 ${Math.round(cs * 0.2)}px ${'"Zen Kaku Gothic New",sans-serif'}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('!', cs * 0.8, cs * 0.21);
+  }
+  ctx.restore();
+  if (mode === 'night' && b.hp < maxHp(b)) hpBar(x + cs * 0.12, y + cs * 0.04, cs * 0.76, b.hp / maxHp(b), '#7fd08a');
+}
+function hpBar(x, y, w, p, col) {
+  ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(x - 1, y - 1, w + 2, 5);
+  ctx.fillStyle = p > 0.35 ? col : '#ff6b6b'; ctx.fillRect(x, y, w * clamp(p, 0, 1), 3);
+}
+function drawLantern(x, y, b, t) {
+  const cx = x + cs / 2, cy = y + cs / 2, fl = 1 + Math.sin(t / 170) * 0.04 + Math.sin(t / 67) * 0.03;
+  const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, cs * 1.1 * fl);
+  g.addColorStop(0, 'rgba(255,190,90,.55)'); g.addColorStop(1, 'rgba(255,170,60,0)');
+  ctx.fillStyle = g; ctx.fillRect(cx - cs * 1.2, cy - cs * 1.2, cs * 2.4, cs * 2.4);
+  ctx.fillStyle = '#5b5a68'; ctx.beginPath(); ctx.ellipse(cx, y + cs * 0.82, cs * 0.36, cs * 0.12, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = '#7b7a8a'; ctx.beginPath(); ctx.ellipse(cx, y + cs * 0.78, cs * 0.3, cs * 0.09, 0, 0, 7); ctx.fill();
+  drawEmo('🏮', cx, cy - cs * 0.06 + Math.sin(t / 600) * cs * 0.02, cs * 0.8);
+  if (lampHurt > 0) { ctx.fillStyle = `rgba(255,60,60,${lampHurt * 1.6})`; ctx.beginPath(); ctx.arc(cx, cy, cs * 0.55, 0, 7); ctx.fill(); }
+  ctx.font = `900 ${Math.max(9, Math.round(cs * 0.24))}px "Zen Kaku Gothic New",sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = 'rgba(15,19,38,.85)'; rr(ctx, cx + cs * 0.12, y + cs * 0.72, cs * 0.44, cs * 0.26, cs * 0.12); ctx.fill();
+  ctx.fillStyle = '#ffcf6b'; ctx.fillText('Lv' + b.lv, cx + cs * 0.34, y + cs * 0.855);
+  if (mode === 'night' && b.hp < maxHp(b)) hpBar(x + cs * 0.12, y + cs * 0.02, cs * 0.76, b.hp / maxHp(b), '#ffb547');
+}
+function drawPlacement(t) {
+  const pulse = 0.5 + 0.5 * Math.sin(t / 180);
+  for (let i = 0; i < S.grid.length; i++) {
+    if (!canPlaceAt(placing, i)) continue;
+    const [c, r] = tileXY(i);
+    ctx.fillStyle = `rgba(255,181,71,${0.1 + pulse * 0.12})`; ctx.fillRect(X(c) + 2, Y(r) + 2, cs - 4, cs - 4);
+    ctx.strokeStyle = `rgba(255,200,110,${0.55 + pulse * 0.4})`; ctx.lineWidth = 2; rr(ctx, X(c) + 2.5, Y(r) + 2.5, cs - 5, cs - 5, cs * 0.14); ctx.stroke();
+  }
+}
+function drawFoe(e, t) {
+  const px = X(e.x), py = Y(e.y), R = e.r * cs, wob = Math.sin(t / 170 + e.ph);
+  ctx.save(); ctx.translate(px, py);
+  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(0, R * 0.85, R * 0.9, R * 0.28, 0, 0, 7); ctx.fill();
+  const body = e.type === 'boss' ? '#22081a' : e.type === 'brute' ? '#1a0e2c' : '#130b22';
+  ctx.fillStyle = e.flash > 0 ? '#f6eaff' : body;
+  ctx.beginPath(); ctx.ellipse(0, 0, R, R * (0.95 + wob * 0.05), 0, 0, 7); ctx.fill();
+  for (let k = -1; k <= 1; k++) { ctx.beginPath(); ctx.arc(k * R * 0.5, -R * (0.7 + 0.12 * Math.sin(t / 120 + e.ph + k)), R * 0.38, 0, 7); ctx.fill(); }
+  if (e.type === 'brute' || e.type === 'boss') { ctx.beginPath(); ctx.moveTo(-R * 0.7, -R * 0.6); ctx.lineTo(-R * 0.95, -R * 1.35); ctx.lineTo(-R * 0.35, -R * 0.85); ctx.moveTo(R * 0.7, -R * 0.6); ctx.lineTo(R * 0.95, -R * 1.35); ctx.lineTo(R * 0.35, -R * 0.85); ctx.fill(); }
+  ctx.strokeStyle = e.type === 'boss' ? 'rgba(255,80,110,.55)' : 'rgba(160,120,255,.45)'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.ellipse(0, 0, R * 1.05, R, 0, 0, 7); ctx.stroke();
+  ctx.restore();
+}
+function drawEyes(e, t) {
+  const px = X(e.x), py = Y(e.y), R = e.r * cs, blink = (Math.sin(t / 900 + e.ph * 3) > 0.97) ? 0.15 : 1;
+  ctx.fillStyle = e.type === 'boss' ? '#ff4d6d' : '#ffe27a';
+  ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 6;
+  for (const s of [-1, 1]) { ctx.beginPath(); ctx.ellipse(px + s * R * 0.35, py - R * 0.15, R * 0.14, R * 0.2 * blink, 0, 0, 7); ctx.fill(); }
+  ctx.shadowBlur = 0;
+  if (e.hp < e.max) hpBar(px - R, py - R * 1.6, R * 2, e.hp / e.max, '#c9a6ff');
+}
+function drawFog(t) {
+  const g = fogX;
+  g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-over'; g.clearRect(0, 0, fogC.width, fogC.height);
+  g.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const outA = 0.46 + 0.42 * dusk, inA = 0.24 * dusk;
+  const cr = Math.round(26 - 20 * dusk), cg = Math.round(34 - 26 * dusk), cb = Math.round(66 - 46 * dusk);
+  g.fillStyle = `rgba(${cr},${cg},${cb},${outA})`; g.fillRect(0, 0, CW, CH);
+  g.globalCompositeOperation = 'destination-out';
+  const k = 1 - inA / outA;
+  const hole = (x, y, R, kk) => {
+    const edge = cs * 0.6, gr = g.createRadialGradient(x, y, 0, x, y, R + edge);
+    gr.addColorStop(0, `rgba(0,0,0,${kk})`); gr.addColorStop(clamp(R / (R + edge) * 0.86, 0, 1), `rgba(0,0,0,${kk})`); gr.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = gr; g.fillRect(x - R - edge, y - R - edge, (R + edge) * 2, (R + edge) * 2);
+  };
+  const fl = 1 + Math.sin(t / 180) * 0.012 + Math.sin(t / 61) * 0.008;
+  hole(X(CX + 0.5), Y(CY + 0.5), lightR() * cs * fl, k);
+  if (dusk > 0.05) S.grid.forEach((tl, i) => { const b = tl.b; if (b && b.k === 'brazier' && !b.broken) { const [c, r] = tileXY(i); hole(X(c + 0.5), Y(r + 0.5), DEF.brazier.aura.r[b.lv - 1] * cs * fl, k * dusk); } });
+  g.globalCompositeOperation = 'source-over';
+  ctx.drawImage(fogC, 0, 0, CW, CH);
+  ctx.globalCompositeOperation = 'lighter';
+  const lx = X(CX + 0.5), ly = Y(CY + 0.5), R = lightR() * cs;
+  const gl = ctx.createRadialGradient(lx, ly, 0, lx, ly, R);
+  gl.addColorStop(0, `rgba(255,170,70,${0.1 + 0.12 * dusk})`); gl.addColorStop(1, 'rgba(255,170,70,0)');
+  ctx.fillStyle = gl; ctx.fillRect(lx - R, ly - R, R * 2, R * 2);
+  ctx.globalCompositeOperation = 'source-over';
+}
+function draw(t, dt) {
+  if (!S || CW === 0) return;
+  if (!terrainC) buildTerrain();
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.fillStyle = '#121833'; ctx.fillRect(0, 0, CW, CH);
+  ctx.drawImage(terrainC, mx, my, COLS * cs, ROWS * cs);
+  if (placing) drawPlacement(t);
+  S.grid.forEach((tl, i) => { if (tl.b && tl.b.k === 'wall') drawWall(i, tl.b); });
+  S.grid.forEach((tl, i) => { if (tl.b && tl.b.k !== 'wall') drawBuilding(i, tl.b, t); });
+  if (selected >= 0) { const [c, r] = tileXY(selected); ctx.strokeStyle = '#ffd27a'; ctx.lineWidth = 2.5; rr(ctx, X(c) + 1.5, Y(r) + 1.5, cs - 3, cs - 3, cs * 0.16); ctx.stroke(); }
+  if (night) {
+    const foes = night.foes.slice().sort((a, b) => a.y - b.y);
+    for (const e of foes) drawFoe(e, t);
+    for (const s of night.shots) {
+      if (s.splash) {
+        const h = Math.sin(clamp(s.prog, 0, 1) * Math.PI) * cs * 0.7;
+        ctx.fillStyle = '#9a97a8'; ctx.beginPath(); ctx.arc(X(s.x), Y(s.y) - h, cs * 0.1, 0, 7); ctx.fill();
+      } else {
+        const a = Math.atan2(s.ty - s.y, s.tx - s.x);
+        ctx.strokeStyle = '#ffe2a8'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(X(s.x), Y(s.y)); ctx.lineTo(X(s.x) - Math.cos(a) * cs * 0.3, Y(s.y) - Math.sin(a) * cs * 0.3); ctx.stroke();
+      }
+    }
+    for (const b of night.beams) {
+      ctx.strokeStyle = `rgba(255,200,110,${b.t / 0.16})`; ctx.lineWidth = 3; ctx.shadowColor = '#ffb547'; ctx.shadowBlur = 10;
+      ctx.beginPath(); ctx.moveTo(X(b.x1), Y(b.y1)); ctx.lineTo(X(b.x2), Y(b.y2)); ctx.stroke(); ctx.shadowBlur = 0;
+    }
+  }
+  drawParts(t, false);
+  drawFog(t);
+  if (night) for (const e of night.foes) drawEyes(e, t);
+  drawParts(t, true);
+  fx.rings = fx.rings.filter((rg) => {
+    const k = (t - rg.t0) / 600; if (k >= 1) return false;
+    ctx.strokeStyle = rg.col.replace('A', String(1 - k)); ctx.lineWidth = 6 * (1 - k) + 1;
+    ctx.beginPath(); ctx.arc(X(CX + 0.5), Y(CY + 0.5), rg.R * cs * k, 0, 7); ctx.stroke(); return true;
+  });
+  drawFloats(t);
+}
+function burst(px, py, n, colors, o = {}) {
+  if (fx.parts.length > 500) return;
+  const t = now();
+  for (let i = 0; i < n; i++) {
+    const a = o.up ? -Math.PI / 2 + (Math.random() - 0.5) * 1.6 : Math.random() * Math.PI * 2, sp = (o.sp || 90) * (0.4 + Math.random());
+    fx.parts.push({ x: px, y: py, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: o.g ?? 120, s: (o.s || 4) * (0.6 + Math.random() * 0.8), col: colors[i % colors.length], t0: t, life: (o.life || 600) * (0.7 + Math.random() * 0.6), top: !!o.top, round: !!o.round });
+  }
+}
+function drawParts(t, top) {
+  fx.parts = fx.parts.filter((p) => {
+    const age = t - p.t0, k = age / p.life; if (k >= 1) return false;
+    if (p.top !== top) return true;
+    const a = age / 1000, x = p.x + p.vx * a, y = p.y + p.vy * a + 0.5 * p.g * a * a;
+    ctx.globalAlpha = 1 - k; ctx.fillStyle = p.col;
+    if (p.round) { ctx.beginPath(); ctx.arc(x, y, p.s * (1 - k * 0.5), 0, 7); ctx.fill(); } else ctx.fillRect(x - p.s / 2, y - p.s / 2, p.s, p.s);
+    return true;
+  });
+  ctx.globalAlpha = 1;
+}
+function floatText(text, px, py, o = {}) { fx.floats.push({ text, x: px, y: py, size: o.size || Math.max(12, cs * 0.36), col: o.col || '#fff3d6', dur: o.dur || 900, rise: o.rise ?? 26, t0: now() }); }
+function drawFloats(t) {
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+  fx.floats = fx.floats.filter((f) => {
+    const k = (t - f.t0) / f.dur; if (k >= 1) return false;
+    ctx.globalAlpha = k > 0.7 ? 1 - (k - 0.7) / 0.3 : 1;
+    ctx.font = `900 ${Math.round(f.size)}px "Zen Kaku Gothic New","Hiragino Sans",sans-serif`;
+    ctx.lineWidth = Math.max(3, f.size * 0.22); ctx.strokeStyle = 'rgba(10,8,20,.9)';
+    const y = f.y - k * f.rise; ctx.strokeText(f.text, f.x, y); ctx.fillStyle = f.col; ctx.fillText(f.text, f.x, y);
+    return true;
+  });
+  ctx.globalAlpha = 1;
+}
+
+/* ================= night simulation ================= */
+function buildWave(d) {
+  const rand = makeRand(hashStr(S.seed + ':' + d));
+  const mod = S.tonight || {};
+  const n = Math.round((3 + Math.floor(1.3 * d)) * (mod.count || 1));
+  const span = 6 + n * 0.75, list = [];
+  for (let i = 0; i < n; i++) {
+    const r = rand(); let type = 'shade';
+    if (d >= 5 && r < (d >= 12 ? 0.18 : 0.12)) type = 'brute';
+    else if (d >= 3 && r < 0.42) type = 'runner';
+    list.push({ t: (i / n) * span + rand() * 0.8, type, edge: rand() });
+  }
+  if (d >= 7 && d % 7 === 0) { const bosses = 1 + Math.floor(d / 15); for (let i = 0; i < bosses; i++) list.push({ t: span * 0.55 + i * 3, type: 'boss', edge: rand() }); }
+  list.sort((a, b) => a.t - b.t);
+  return list;
+}
+function forecast() {
+  const w = buildWave(S.day);
+  const has = (k) => w.some((x) => x.type === k);
+  return { n: w.length, note: has('boss') ? 'ボスの夜' : has('brute') ? '大きな影あり' : has('runner') ? '速い影あり' : '' };
+}
+function spawnFoe(w) {
+  const def = FOES[w.type], sc = hpScale(S.day);
+  const W = COLS + 1.2, H = ROWS + 1.2, P = 2 * (W + H); let s = w.edge * P, x, y;
+  if (s < W) { x = -0.6 + s; y = -0.6; }
+  else if ((s -= W) < H) { x = COLS + 0.6; y = -0.6 + s; }
+  else if ((s -= H) < W) { x = COLS + 0.6 - s; y = ROWS + 0.6; }
+  else { s -= W; x = -0.6; y = ROWS + 0.6 - s; }
+  const hp = def.hp * sc;
+  night.foes.push({ type: w.type, x, y, hp, max: hp, spd: def.spd, atk: def.atk * (1 + 0.05 * (S.day - 1)), r: def.r, drop: def.drop, att: -1, hitT: 0, flash: 0, ph: Math.random() * 6 });
+}
+function tileAt(x, y) { const c = Math.floor(x), r = Math.floor(y); if (c < 0 || r < 0 || c >= COLS || r >= ROWS) return -1; return r * COLS + c; }
+function damage(e, d) { e.hp -= d; e.flash = 0.08; }
+function startNight() {
+  if (mode !== 'day') return;
+  cancelPlacing(); closeSheet(); save();
+  STAFF = staffing();
+  const wave = buildWave(S.day);
+  night = { t: 0, wave, idx: 0, foes: [], shots: [], beams: [], kills: 0, shards: 0, total: wave.length, cd: new Map(), skill: [0, 0], ended: false };
+  mode = 'night'; duskTarget = 1;
+  $('dayPanel').hidden = true; $('nightPanel').hidden = false;
+  renderAll(); renderNightPanel(true);
+  banner(`${S.day}日目の夜`, `影が ${wave.length}体 やってくる`);
+  sfx.night(); haptic([20, 60, 20]);
+}
+function breakB(i) {
+  const b = S.grid[i].b; if (!b) return;
+  const [c, r] = tileXY(i);
+  if (i === LI) { b.hp = 0; return; }
+  b.broken = true; b.hp = 0;
+  burst(X(c + 0.5), Y(r + 0.5), 14, ['#6a6474', '#8a7a68', '#3a3540'], { sp: 110, s: 5, life: 700 });
+  floatText('こわれた！', X(c + 0.5), Y(r + 0.3), { col: '#ff9b9b' });
+  sfx.brk(); haptic(30);
+}
+function updateNight(dt) {
+  const N = night; N.t += dt;
+  while (N.idx < N.wave.length && N.wave[N.idx].t <= N.t) { spawnFoe(N.wave[N.idx]); N.idx++; }
+  const lx = CX + 0.5, ly = CY + 0.5;
+  const braz = [];
+  S.grid.forEach((t, i) => { const b = t.b; if (b && b.k === 'brazier' && !b.broken) { const [c, r] = tileXY(i); braz.push({ x: c + 0.5, y: r + 0.5, lv: b.lv }); } });
+  const A = DEF.brazier.aura;
+  for (const e of N.foes) {
+    if (e.flash > 0) e.flash -= dt;
+    let sf = 1;
+    for (const b of braz) if (Math.hypot(e.x - b.x, e.y - b.y) < A.r[b.lv - 1]) { sf = Math.min(sf, A.slow[b.lv - 1]); e.hp -= A.dps[b.lv - 1] * dt; }
+    if (e.hp <= 0) continue;
+    if (e.att >= 0) {
+      const tb = S.grid[e.att].b;
+      if (!tb || tb.broken) e.att = -1;
+      else {
+        tb.hp -= e.atk * dt; e.hitT -= dt;
+        if (e.hitT <= 0) { e.hitT = 0.55; const [c, r] = tileXY(e.att); burst(X(c + 0.5), Y(r + 0.5), 3, ['#c9a6ff', '#5a4a8a'], { sp: 60, s: 3, life: 350 }); if (e.att === LI) { lampHurt = 0.25; sfx.lamp(); haptic(12); } else sfx.hit(); }
+        if (tb.hp <= 0) { breakB(e.att); e.att = -1; }
+        continue;
+      }
+    }
+    const dx = lx - e.x, dy = ly - e.y, d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d;
+    const ti = tileAt(e.x + ux * (e.r + 0.1), e.y + uy * (e.r + 0.1));
+    if (ti >= 0) { const tb = S.grid[ti].b; if (tb && !tb.broken) { e.att = ti; e.hitT = 0; continue; } }
+    const step = e.spd * sf * dt;
+    e.x += ux * step + Math.cos(e.ph + N.t * 1.7) * 0.06 * dt;
+    e.y += uy * step + Math.sin(e.ph + N.t * 1.3) * 0.06 * dt;
+  }
+  S.grid.forEach((t, i) => {
+    const b = t.b; if (!b || b.broken) return;
+    let atk = null;
+    if (b.k === 'lantern') atk = { dmg: LANTERN.dmg[b.lv - 1], range: LANTERN.range[b.lv - 1], rate: 1.0, beam: true };
+    else if ((b.k === 'tower' || b.k === 'catapult') && STAFF.staffed.has(i)) { const a = DEF[b.k].atk; atk = { dmg: a.dmg[b.lv - 1], range: a.range[b.lv - 1], rate: a.rate[b.lv - 1], splash: a.splash || 0 }; }
+    if (!atk) return;
+    let cd = (N.cd.get(i) || 0) - dt;
+    if (cd <= 0) {
+      const [c, r] = tileXY(i), x = c + 0.5, y = r + 0.5;
+      let tgt = null, bd = 1e9;
+      for (const e of N.foes) { if (e.hp <= 0) continue; const dd = Math.hypot(e.x - x, e.y - y); if (dd <= atk.range && dd < bd) { bd = dd; tgt = e; } }
+      if (tgt) {
+        cd = atk.rate;
+        if (atk.beam) { damage(tgt, atk.dmg); N.beams.push({ x1: x, y1: y - 0.1, x2: tgt.x, y2: tgt.y, t: 0.16 }); sfx.beam(); }
+        else { N.shots.push({ x, y, tx: tgt.x, ty: tgt.y, target: tgt, spd: atk.splash ? 4.5 : 9, dmg: atk.dmg, splash: atk.splash, dist: Math.max(0.1, bd), prog: 0 }); if (atk.splash) sfx.toss(); else sfx.shoot(); }
+      } else cd = 0;
+    }
+    N.cd.set(i, cd);
+  });
+  N.shots = N.shots.filter((s) => {
+    if (s.target && s.target.hp > 0) { s.tx = s.target.x; s.ty = s.target.y; }
+    const dx = s.tx - s.x, dy = s.ty - s.y, d = Math.hypot(dx, dy), mv = s.spd * dt;
+    if (d <= mv) {
+      if (s.splash) {
+        for (const e of N.foes) if (e.hp > 0 && Math.hypot(e.x - s.tx, e.y - s.ty) <= s.splash) damage(e, s.dmg);
+        burst(X(s.tx), Y(s.ty), 10, ['#9a97a8', '#c9c4d8', '#ffb547'], { sp: 120, s: 4, life: 500 });
+        sfx.boom();
+      } else if (s.target && s.target.hp > 0) damage(s.target, s.dmg);
+      return false;
+    }
+    s.x += dx / d * mv; s.y += dy / d * mv; s.prog = 1 - (d - mv) / s.dist;
+    return true;
+  });
+  N.beams.forEach((b) => { b.t -= dt; }); N.beams = N.beams.filter((b) => b.t > 0);
+  const mult = (S.tonight && S.tonight.shards) || 1;
+  N.foes = N.foes.filter((e) => {
+    if (e.hp > 0) return true;
+    const sh = Math.round(e.drop * mult);
+    N.kills++; N.shards += sh; S.res.shards += sh;
+    burst(X(e.x), Y(e.y), e.type === 'boss' ? 30 : 9, ['#2a1a40', '#4a3570', '#120a20'], { up: true, sp: 50, g: -40, s: e.type === 'boss' ? 9 : 5, life: 800, round: true });
+    burst(X(e.x), Y(e.y), 3, ['#ffcf6b'], { sp: 70, s: 3, life: 500, top: true });
+    floatText(`+${sh}✦`, X(e.x), Y(e.y) - e.r * cs, { col: '#ffcf6b', size: Math.max(11, cs * 0.3) });
+    sfx.kill();
+    if (e.type === 'boss') { banner('夜の主をたおした！'); haptic([30, 50, 30]); }
+    return false;
+  });
+  N.skill[0] = Math.max(0, N.skill[0] - dt); N.skill[1] = Math.max(0, N.skill[1] - dt);
+  lampHurt = Math.max(0, lampHurt - dt);
+  if (lanternB().hp <= 0) { defeat(); return; }
+  if (N.idx >= N.wave.length && N.foes.length === 0) victory();
+}
+function useSkill(k) {
+  if (mode !== 'night' || !night || night.ended || night.skill[k] > 0) return;
+  sfx.unlock();
+  night.skill[k] = SKILLS[k].cd;
+  if (k === 0) {
+    const R = lightR(), dmg = 20 + 6 * lanternLv();
+    for (const e of night.foes) if (Math.hypot(e.x - CX - 0.5, e.y - CY - 0.5) <= R + 0.5) damage(e, dmg);
+    fx.rings.push({ t0: now(), R: R + 0.5, col: 'rgba(255,200,110,A)' });
+    sfx.wave(); haptic([15, 40, 15]);
+  } else {
+    S.grid.forEach((t, i) => {
+      const b = t.b; if (!b || b.broken) return;
+      b.hp = Math.min(maxHp(b), b.hp + maxHp(b) * 0.35);
+      const [c, r] = tileXY(i); burst(X(c + 0.5), Y(r + 0.6), 4, ['#7fd08a', '#c8f5c8'], { up: true, sp: 50, g: -30, s: 3, life: 700, top: true });
+    });
+    fx.rings.push({ t0: now(), R: lightR(), col: 'rgba(127,208,138,A)' });
+    sfx.heal(); haptic(15);
+  }
+}
+function victory() {
+  night.ended = true;
+  sfx.victory(); haptic([20, 40, 20]);
+  banner('夜明け', `${S.day}日目の夜を乗り切った`);
+  duskTarget = 0;
+  setTimeout(morning, 1400);
+}
+function defeat() {
+  night.ended = true; mode = 'defeat';
+  sfx.defeat(); haptic([60, 80, 120]);
+  const survived = S.day - 1;
+  if (survived > best) { best = survived; store.set(BEST_KEY, best); }
+  setTimeout(() => {
+    openSheet({
+      kicker: '灯が消えた', title: `${S.day}日目の夜を越えられなかった`, dismissable: false,
+      html: `<div class="rows"><div><span>生き延びた日数</span><b>${survived}日</b></div><div><span>倒した影（今夜）</span><b>${night.kills}</b></div><div><span>最高記録</span><b>${best}日</b></div></div>
+             <p class="note">${S.day}日目の朝に戻って、守りを固め直せます。柵で囲む、見張り塔を増やす、大灯籠を強化する、などを試してみてください。</p>`,
+      actions: [
+        { label: `${S.day}日目の朝からやり直す`, cls: 'btn-amber', onClick: () => { retryDay(); } },
+        { label: '新しい村をはじめる', onClick: () => { startNewVillage(); } },
+        { label: 'タイトルへ', onClick: () => { toTitle(); } },
+      ],
+    });
+  }, 1200);
+}
+function retryDay() {
+  restoreSnap(); night = null; fx.parts = []; fx.floats = []; fx.rings = [];
+  enterDay(); toast('朝に戻った。守りを固めよう');
+}
+
+/* ================= morning ================= */
+function morning() {
+  if (!night) return;
+  const rep = { kills: night.kills, shards: night.shards, harvest: { wood: 0, stone: 0, food: 0 }, newcomers: 0, left: 0, broken: 0, supply: null };
+  S.stats.kills += night.kills;
+  night = null; fx.rings = [];
+  S.day++; S.tonight = null;
+  STAFF = staffing();
+  gain(rep.harvest = production());
+  rep.ate = S.pop; S.res.food -= S.pop;
+  if (S.res.food < 0) { const def = -S.res.food; S.res.food = 0; rep.left = Math.min(S.pop - 1, Math.ceil(def / 2)); S.pop -= rep.left; }
+  else { rep.newcomers = Math.max(0, Math.min(capacity() - S.pop, 2)); S.pop += rep.newcomers; }
+  S.grid.forEach((t) => { const b = t.b; if (!b) return; if (b.broken) rep.broken++; else b.hp = maxHp(b); });
+  lanternB().hp = maxHp(lanternB());
+  if (S.lastSupply !== dayKey()) { S.lastSupply = dayKey(); rep.supply = { wood: 15 + S.day * 2, stone: 8 + S.day, food: 10 }; gain(rep.supply); }
+  S.pendingEvent = rollEvent();
+  const survived = S.day - 1;
+  if (survived > best) { best = survived; store.set(BEST_KEY, best); rep.record = true; }
+  mode = 'report'; duskTarget = 0;
+  STAFF = staffing();
+  $('nightPanel').hidden = true; $('dayPanel').hidden = false;
+  save(); renderAll();
+  showReport(rep);
+}
+function showReport(rep) {
+  const h = rep.harvest;
+  const harvest = [h.wood ? `🪵+${h.wood}` : '', h.stone ? `🪨+${h.stone}` : '', h.food ? `🍞+${h.food}` : ''].filter(Boolean).join(' ') || 'なし';
+  const rows = [
+    `<div><span>倒した影</span><b>${rep.kills}体 ・ ✦+${rep.shards}</b></div>`,
+    `<div><span>朝の収穫</span><b>${harvest}</b></div>`,
+    `<div><span>みんなの食事</span><b>🍞-${rep.ate}</b></div>`,
+    rep.left ? `<div><span>食料不足</span><b style="color:var(--danger)">${rep.left}人が村を去った</b></div>` : `<div><span>新しい住民</span><b>${rep.newcomers ? `+${rep.newcomers}人` : capacity() <= S.pop ? '家がいっぱい' : 'なし'}</b></div>`,
+    rep.broken ? `<div><span>がれき</span><b style="color:var(--danger)">${rep.broken}か所（修理が必要）</b></div>` : '',
+    rep.supply ? `<div class="total"><span>今日の補給（1日1回）</span><b>${costStr(rep.supply)}</b></div>` : '',
+  ].join('');
+  openSheet({
+    kicker: rep.record ? `最高記録更新 ・ ${S.day - 1}日生存` : '夜を乗り切った', title: `${S.day}日目の朝`, icon: '🌅', dismissable: false,
+    html: `<div class="rows">${rows}</div>`,
+    actions: [{ label: S.pendingEvent ? 'つぎへ' : '村へ', cls: 'btn-amber', onClick: () => { setTimeout(S.pendingEvent ? () => showEvent(S.pendingEvent) : finishMorning, 0); } }],
+  });
+}
+function rollEvent() {
+  if (S.day < 2) return null;
+  const rand = makeRand(hashStr(S.seed + ':ev:' + S.day));
+  if (rand() > 0.45) return null;
+  const pool = EVENTS.filter((e) => !e.cond || e.cond());
+  const total = pool.reduce((a, e) => a + e.w, 0); let x = rand() * total;
+  for (const e of pool) { x -= e.w; if (x <= 0) return e.id; }
+  return pool.length ? pool[pool.length - 1].id : null;
+}
+function showEvent(id) {
+  const ev = EVENTS.find((e) => e.id === id);
+  if (!ev) { finishMorning(); return; }
+  openSheet({
+    kicker: 'できごと', title: ev.title, dismissable: false, html: `<p>${ev.text}</p>`,
+    actions: ev.choices.map((ch, i) => ({
+      label: ch.label, sub: ch.sub ? ch.sub() : '', cls: i === 0 ? 'btn-amber' : '', disabled: ch.ok ? !ch.ok() : false,
+      onClick: () => { const msg = ch.act(); setTimeout(() => { finishMorning(); toast(msg); }, 0); },
+    })),
+  });
+}
+function finishMorning() {
+  S.pendingEvent = null;
+  S.snap = snapStr();
+  enterDay();
+  const f = forecast();
+  banner(`${S.day}日目`, `今夜の影：${f.n}体${f.note ? ' ・ ' + f.note : ''}`);
+}
+function enterDay() {
+  mode = 'day'; duskTarget = 0; selected = -1; placing = null;
+  $('nightPanel').hidden = true; $('dayPanel').hidden = false;
+  STAFF = staffing(); save(); renderAll();
+}
+
+/* ================= day actions ================= */
+function afterChange() { STAFF = staffing(); save(); renderAll(); }
+function build(k, i) {
+  const c = DEF[k].cost[0];
+  if (!canAfford(c) || !canPlaceAt(k, i)) return false;
+  pay(c); S.grid[i].b = { k, lv: 1, hp: DEF[k].hp[0], broken: false };
+  popAt.set(i, now());
+  const [cc, r] = tileXY(i); burst(X(cc + 0.5), Y(r + 0.8), 8, ['#c9a77a', '#8a6a45'], { sp: 70, s: 3, life: 450 });
+  sfx.build(); haptic(10); afterChange();
+  return true;
+}
+function upgrade(i) {
+  const b = S.grid[i].b; if (!b || b.broken) return;
+  let c;
+  if (b.k === 'lantern') { c = LANTERN.cost[b.lv]; if (!c) return; }
+  else { if (b.lv >= maxLv()) return; c = DEF[b.k].cost[b.lv]; }
+  if (!canAfford(c)) return;
+  pay(c); b.lv++; b.hp = maxHp(b); popAt.set(i, now());
+  const [cc, r] = tileXY(i); burst(X(cc + 0.5), Y(r + 0.5), 14, ['#ffcf6b', '#fff3d6'], { up: true, sp: 90, g: 60, s: 3, life: 700, top: true });
+  sfx.upgrade(); haptic([10, 30, 10]);
+  if (b.k === 'lantern') { terrainC = null; toast(`大灯籠がLv${b.lv}になった。光が広がった`); }
+  afterChange();
+}
+function repairCost(b) { const d = DEF[b.k]; let w = 0, s = 0; for (let l = 0; l < b.lv; l++) { w += d.cost[l].wood || 0; s += d.cost[l].stone || 0; } const c = {}; if (w) c.wood = Math.ceil(w / 2); if (s) c.stone = Math.ceil(s / 2); return c; }
+function repair(i) { const b = S.grid[i].b; if (!b || !b.broken) return; const c = repairCost(b); if (!canAfford(c)) return; pay(c); b.broken = false; b.hp = maxHp(b); popAt.set(i, now()); sfx.build(); afterChange(); }
+function demolish(i) {
+  const b = S.grid[i].b; if (!b || b.k === 'lantern') return;
+  const c0 = DEF[b.k].cost[0], back = {}; if (c0.wood) back.wood = Math.floor(c0.wood / 2); if (c0.stone) back.stone = Math.floor(c0.stone / 2);
+  gain(back); S.grid[i].b = null; sfx.brk(); afterChange();
+  if (Object.keys(back).length) toast(`取りこわして ${costStr(back)} を回収した`);
+}
+function setPlacing(k) {
+  placing = k; selected = -1;
+  const d = DEF[k];
+  $('placeText').textContent = `${d.name}：光の届く${d.terrain.length === 3 ? '' : d.terrain.map((x) => TERRAIN_NAME[x]).join('・') + 'の'}マスをタップ`;
+  $('placeHint').hidden = false; renderCards(); renderHint();
+}
+function cancelPlacing() { if (!placing) return; placing = null; $('placeHint').hidden = true; renderCards(); renderHint(); }
+function claimQuest() {
+  const q = QUESTS[S.quest]; if (!q || !q.done()) return;
+  gain(q.reward); S.quest++; sfx.coin(); haptic(10);
+  flashChip(Object.keys(q.reward));
+  toast(`目標達成！ ${costStr(q.reward)} を受け取った`);
+  afterChange();
+}
+
+/* ================= info sheets ================= */
+function statRows(b) {
+  const rows = [];
+  const nx = b.lv < 3 ? b.lv : -1;
+  const arrow = (a, z) => (z !== undefined && z !== null ? `${a} → ${z}` : `${a}`);
+  if (b.k === 'lantern') {
+    const n = b.lv < LANTERN.max ? b.lv : -1, v = (arr) => (n >= 0 ? arr[n] : null);
+    rows.push(['光の範囲', arrow(`${LANTERN.radius[b.lv - 1]}マス`, n >= 0 ? `${LANTERN.radius[n]}マス` : null)]);
+    rows.push(['耐久', arrow(LANTERN.hp[b.lv - 1], v(LANTERN.hp))]);
+    rows.push(['灯の攻撃', arrow(LANTERN.dmg[b.lv - 1], v(LANTERN.dmg))]);
+    rows.push(['住める人数', arrow(`+${5 + 2 * (b.lv - 1)}`, n >= 0 ? `+${5 + 2 * n}` : null)]);
+    rows.push(['建物の強化', `Lv${maxLv()}まで`]);
+    return rows;
+  }
+  const d = DEF[b.k];
+  rows.push(['耐久', `${fmt(Math.max(0, b.hp))} / ${maxHp(b)}`]);
+  if (d.prod) for (const k in d.prod) rows.push(['毎朝の収穫', arrow(`${RES[k]}+${d.prod[k][b.lv - 1]}`, nx >= 0 ? `+${d.prod[k][nx]}` : null)]);
+  if (d.cap) rows.push(['住める人数', arrow(`+${d.cap[b.lv - 1]}`, nx >= 0 ? `+${d.cap[nx]}` : null)]);
+  if (d.atk) {
+    rows.push(['攻撃', arrow(d.atk.dmg[b.lv - 1], nx >= 0 ? d.atk.dmg[nx] : null)]);
+    rows.push(['射程', arrow(`${d.atk.range[b.lv - 1]}マス`, nx >= 0 ? `${d.atk.range[nx]}マス` : null)]);
+    rows.push(['間隔', arrow(`${d.atk.rate[b.lv - 1]}秒`, nx >= 0 ? `${d.atk.rate[nx]}秒` : null)]);
+  }
+  if (d.aura) {
+    rows.push(['範囲', arrow(`${d.aura.r[b.lv - 1]}マス`, nx >= 0 ? `${d.aura.r[nx]}マス` : null)]);
+    rows.push(['焼くダメージ', arrow(`${d.aura.dps[b.lv - 1]}/秒`, nx >= 0 ? `${d.aura.dps[nx]}/秒` : null)]);
+  }
+  if (b.k === 'wall' && nx >= 0) rows.push(['強化すると', `${d.lvNames[nx]}（耐久${d.hp[nx]}）`]);
+  return rows;
+}
+function openInfo(i) {
+  const b = S.grid[i].b; if (!b) return;
+  selected = i;
+  const rowsHtml = (rows) => `<div class="rows">${rows.map(([a, z]) => `<div><span>${a}</span><b>${z}</b></div>`).join('')}</div>`;
+  if (b.k === 'lantern') {
+    const c = LANTERN.cost[b.lv];
+    const unlocks = c ? BUILD_ORDER.filter((k) => DEF[k].unlock === b.lv + 1).map((k) => DEF[k].name) : [];
+    if (c && b.lv + 1 <= 3) unlocks.push(`建物の強化Lv${b.lv + 1}`);
+    openSheet({
+      title: `大灯籠 Lv${b.lv}`, icon: '🏮', kicker: '村の中心',
+      html: `<p>村を照らすともしび。光の届くマスにだけ建物を建てられる。この灯が消えると村は闇にのまれる。</p>${rowsHtml(statRows(b))}${unlocks.length ? `<p class="note">次のLvで解放：${unlocks.join('、')}</p>` : ''}`,
+      actions: [
+        c ? { label: `強化してLv${b.lv + 1}に`, sub: canAfford(c) ? costStr(c) : `${costStr(c)}（${lackStr(c)}）`, cls: 'btn-amber', disabled: !canAfford(c) || mode !== 'day', onClick: () => { upgrade(i); openInfo(i); return false; } }
+          : { label: '最大レベルです', disabled: true },
+        { label: '閉じる' },
+      ],
+      onClose: () => { selected = -1; },
+    });
+    return;
+  }
+  const d = DEF[b.k];
+  let status, cls;
+  if (b.broken) { status = 'がれき：修理するまで働かない'; cls = 'bad'; }
+  else if (d.workers) { if (STAFF.staffed.has(i)) { status = `稼働中（住民${d.workers}人）`; cls = 'ok'; } else { status = `人手不足：住民があと${d.workers}人必要。家を建てて住民を増やそう`; cls = 'bad'; } }
+  else { status = '稼働中'; cls = 'ok'; }
+  const acts = [];
+  if (b.broken) {
+    const rc = repairCost(b);
+    acts.push({ label: '修理する', sub: canAfford(rc) ? costStr(rc) : `${costStr(rc)}（${lackStr(rc)}）`, cls: 'btn-amber', disabled: !canAfford(rc) || mode !== 'day', onClick: () => { repair(i); openInfo(i); return false; } });
+  } else if (b.lv < 3) {
+    const c = d.cost[b.lv], locked = b.lv >= maxLv();
+    acts.push({ label: `強化してLv${b.lv + 1}に`, sub: locked ? `大灯籠Lv${b.lv + 1}が必要` : canAfford(c) ? costStr(c) : `${costStr(c)}（${lackStr(c)}）`, cls: 'btn-amber', disabled: locked || !canAfford(c) || mode !== 'day', onClick: () => { upgrade(i); openInfo(i); return false; } });
+  } else acts.push({ label: '最大レベルです', disabled: true });
+  acts.push({ label: '取りこわす', sub: '建てた費用の半分が戻る', cls: 'btn-danger', disabled: mode !== 'day', onClick: (btn) => {
+    if (btn.dataset.armed) { demolish(i); return; }
+    btn.dataset.armed = '1'; btn.querySelector('span').textContent = 'もう一度押すと取りこわす'; return false;
+  } });
+  acts.push({ label: '閉じる' });
+  openSheet({
+    title: `${bName(b)} Lv${b.lv}`, icon: bIcon(b),
+    html: `<p class="status ${cls}">${status}</p><p>${d.desc}</p>${rowsHtml(statRows(b))}`,
+    actions: acts, onClose: () => { selected = -1; },
+  });
+}
+function openHowTo(first = false) {
+  openSheet({
+    kicker: first ? 'ようこそ' : 'あそびかた', title: 'ともしびの村の暮らし', dismissable: !first,
+    html: `<ol class="steps">
+      <li><span class="n">昼</span><div><b>光の届く場所に建物を建てる</b><p>家・畑・木こり小屋などを建てて村を育てる。木・石・食料は毎朝まとめて手に入る。昼に時間制限はない。</p></div></li>
+      <li><span class="n">夜</span><div><b>影から大灯籠を守る</b><p>影は灯をめざしてまっすぐ来る。柵でふさぎ、見張り塔で倒そう。影をタップしても攻撃できる。</p></div></li>
+      <li><span class="n">人</span><div><b>住民と食料のバランス</b><p>畑や見張り塔を動かすには住民が必要。住民は毎日1つ食料を食べる。</p></div></li>
+    </ol>
+    <p class="note">灯が消えても、その日の朝からやり直せます。上の「目標」をこなすと、つぎにやることが分かります。</p>`,
+    actions: [{ label: first ? 'はじめる' : '閉じる', cls: 'btn-amber' }],
+  });
+}
+function openMenu() {
+  openSheet({
+    kicker: 'メニュー', title: `${S.day}日目`,
+    html: `<div class="rows"><div><span>最高記録</span><b>${best}日 生存</b></div><div><span>これまでに倒した影</span><b>${fmt(S.stats.kills)}体</b></div></div>`,
+    actions: [
+      { label: `効果音：${SET.sound ? 'オン' : 'オフ'}`, onClick: (btn) => { SET.sound = !SET.sound; saveSet(); btn.querySelector('span').textContent = `効果音：${SET.sound ? 'オン' : 'オフ'}`; return false; } },
+      { label: 'あそびかた', onClick: () => { setTimeout(() => openHowTo(false), 0); } },
+      { label: mode === 'night' ? 'タイトルへ（今夜は最初からになります）' : 'タイトルへ（村は保存されます）', onClick: () => { toTitle(); } },
+      { label: '閉じる', cls: 'btn-amber' },
+    ],
+  });
+}
+
+/* ================= HUD rendering ================= */
+function renderAll() { renderHud(); renderQuest(); if (mode !== 'night') { renderCards(); renderHint(); } }
+function renderHud() {
+  $('dayNum').textContent = `${S.day}日目`;
+  const isNight = mode === 'night';
+  $('phase').textContent = isNight ? '夜' : '昼'; $('phase').classList.toggle('night', isNight);
+  const p = production(), dlt = { wood: p.wood, stone: p.stone, food: p.food - S.pop };
+  for (const k of ['wood', 'stone', 'food']) {
+    $('v-' + k).textContent = fmt(S.res[k]);
+    const el = $('d-' + k), v = dlt[k];
+    el.textContent = `${v >= 0 ? '+' : ''}${v}/日`; el.className = 'd' + (v > 0 ? ' up' : v < 0 ? ' down' : '');
+  }
+  $('v-shards').textContent = fmt(S.res.shards);
+  $('v-pop').textContent = `${S.pop}/${capacity()}`;
+  const dp = $('d-pop');
+  if (STAFF.need > S.pop) { dp.textContent = `人手-${STAFF.need - S.pop}`; dp.className = 'd down'; }
+  else { dp.textContent = `空き${STAFF.free}`; dp.className = 'd' + (STAFF.free > 0 ? ' up' : ''); }
+}
+function renderQuest() {
+  const box = $('quest'), isNight = mode === 'night';
+  box.classList.toggle('nightq', isNight);
+  if (isNight) {
+    $('qLabel').textContent = '夜'; $('qText').textContent = '大灯籠を守りぬけ'; $('qReward').textContent = '影をタップしても攻撃できる';
+    $('qClaim').hidden = true; return;
+  }
+  const q = QUESTS[S.quest];
+  if (!q) {
+    $('qLabel').textContent = '挑戦'; $('qText').textContent = 'どこまで生き延びられるか'; $('qReward').textContent = `最高記録 ${best}日`; $('qClaim').hidden = true; return;
+  }
+  const done = q.done();
+  $('qLabel').textContent = done ? '目標達成' : `目標 ${S.quest + 1}`;
+  $('qText').textContent = q.text; $('qReward').textContent = `報酬 ${costStr(q.reward)}`;
+  $('qClaim').hidden = !done;
+}
+function renderCards() {
+  const lv = lanternLv(), lc = LANTERN.cost[lv];
+  const html = [`<button class="card lamp ${lc && !canAfford(lc) ? 'poor' : ''}" type="button" data-k="lantern"><span class="ic">🏮</span><span class="nm">灯籠 Lv${lv}</span><span class="cs">${lc ? (canAfford(lc) ? '強化できる' : '強化：資源不足') : '最大Lv'}</span></button>`];
+  for (const k of BUILD_ORDER) {
+    const d = DEF[k], locked = lv < d.unlock, c = d.cost[0];
+    const cls = ['card', locked ? 'locked' : '', !locked && !canAfford(c) ? 'poor' : '', placing === k ? 'active' : ''].join(' ');
+    html.push(`<button class="${cls}" type="button" data-k="${k}"><span class="ic">${d.icons[0]}</span><span class="nm">${d.name}</span><span class="cs">${locked ? `灯籠Lv${d.unlock}で解放` : costStr(c)}</span></button>`);
+  }
+  $('cards').innerHTML = html.join('');
+}
+function renderHint() {
+  const f = forecast();
+  const idleDef = S.grid.some((t, i) => t.b && !t.b.broken && (t.b.k === 'tower' || t.b.k === 'catapult') && !STAFF.staffed.has(i));
+  $('nightSub').textContent = idleDef ? '⚠ 人手不足の塔あり' : `影 ${f.n}体${f.note ? '・' + f.note : ''}`;
+  let h;
+  const p = production();
+  if (placing) h = `<b>${DEF[placing].name}</b>：${DEF[placing].desc}`;
+  else if (S.res.food + p.food - S.pop < 0) h = '<span class="warn">明日の朝、食料が足りなくなります。畑を建てるか強化しよう。</span>';
+  else if (STAFF.need > S.pop) h = '<span class="warn">人手不足の建物があります（地図の「!」）。住民は畑→木こり→石切り→塔の順に働きます。家を建てて住民を増やそう。</span>';
+  else if (S.pop >= capacity() && S.day > 1) h = '家がいっぱいです。家を建てると、毎朝新しい住民がやってきます。';
+  else h = TIPS[(S.day - 1) % TIPS.length];
+  $('hint').innerHTML = h;
+}
+const npCache = {};
+function renderNightPanel(force = false) {
+  if (!night) return;
+  const lb = lanternB(), mh = maxHp(lb), hp = Math.max(0, Math.ceil(lb.hp));
+  const set = (id, prop, val) => { const k = id + prop; if (!force && npCache[k] === val) return; npCache[k] = val; const el = $(id); if (prop === 'text') el.textContent = val; else if (prop === 'width') el.style.width = val; else el.style.setProperty(prop, val); };
+  set('lampBar', 'width', `${(hp / mh) * 100}%`);
+  set('lampText', 'text', `${fmt(hp)} / ${mh}`);
+  set('waveText', 'text', `影 のこり ${night.total - night.kills} ・ 倒した ${night.kills}`);
+  for (let k = 0; k < 2; k++) {
+    const cd = night.skill[k], btn = $('skill' + k);
+    set('skill' + k, '--cd', String(cd / SKILLS[k].cd));
+    set('sk' + k + 't', 'text', cd > 0 ? `${Math.ceil(cd)}秒` : '');
+    btn.disabled = cd > 0;
+  }
+  set('speedBtn', 'text', `×${SET.speed}`);
+}
+
+/* ================= input ================= */
+let downP = null;
+cv.addEventListener('pointerdown', (e) => { sfx.unlock(); downP = { x: e.clientX, y: e.clientY, id: e.pointerId }; });
+cv.addEventListener('pointerup', (e) => {
+  if (!downP || downP.id !== e.pointerId) return;
+  const moved = Math.hypot(e.clientX - downP.x, e.clientY - downP.y); downP = null;
+  if (moved > 14) return;
+  const r = cv.getBoundingClientRect(), px = e.clientX - r.left, py = e.clientY - r.top;
+  tapMap(px, py);
+});
+cv.addEventListener('contextmenu', (e) => e.preventDefault());
+function tapMap(px, py) {
+  if (!S) return;
+  const u = (px - mx) / cs, v = (py - my) / cs;
+  if (mode === 'night' && night && !night.ended) {
+    let tgt = null, bd = 0.85;
+    for (const e of night.foes) { const d = Math.hypot(e.x - u, e.y - v); if (d < bd) { bd = d; tgt = e; } }
+    if (tgt) { damage(tgt, 3 + lanternLv()); burst(px, py, 6, ['#fff3d6', '#ffcf6b'], { sp: 90, s: 3, life: 300, top: true }); sfx.zap(); haptic(6); }
+    return;
+  }
+  if (mode !== 'day') return;
+  const c = Math.floor(u), r = Math.floor(v);
+  if (c < 0 || r < 0 || c >= COLS || r >= ROWS) { cancelPlacing(); return; }
+  const i = r * COLS + c, t = S.grid[i];
+  if (placing) {
+    const k = placing;
+    if (t.b) { toast('ここにはもう建物があります'); return; }
+    if (!inLight(i)) { toast('光の届かない場所には建てられません'); return; }
+    if (!DEF[k].terrain.includes(t.t)) { toast(`${DEF[k].name}は${DEF[k].terrain.map((x) => TERRAIN_NAME[x]).join('・')}のマスに建てられます`); return; }
+    if (!canAfford(DEF[k].cost[0])) { toast(`資源が足りません（${lackStr(DEF[k].cost[0])}）`); cancelPlacing(); return; }
+    build(k, i);
+    if (k !== 'wall' || !canAfford(DEF[k].cost[0])) cancelPlacing();
+    return;
+  }
+  if (t.b) { sfx.tap(); openInfo(i); return; }
+  if (!inLight(i)) toast('闇の中です。大灯籠を強化すると光が広がります');
+  else toast(`${TERRAIN_NAME[t.t]}：${t.t === 'f' ? '木こり小屋や柵を建てられます' : t.t === 'r' ? '石切り場や柵を建てられます' : '家・畑・塔などを建てられます'}`);
+}
+$('cards').addEventListener('click', (e) => {
+  const el = e.target.closest('.card'); if (!el || mode !== 'day') return;
+  sfx.unlock(); sfx.tap();
+  const k = el.dataset.k;
+  if (k === 'lantern') { cancelPlacing(); openInfo(LI); return; }
+  const d = DEF[k];
+  if (lanternLv() < d.unlock) { toast(`大灯籠をLv${d.unlock}にすると建てられます`); return; }
+  if (placing === k) { cancelPlacing(); return; }
+  if (!canAfford(d.cost[0])) { toast(`資源が足りません（${lackStr(d.cost[0])}）`); return; }
+  setPlacing(k);
+});
+$('placeCancel').addEventListener('click', cancelPlacing);
+$('nightBtn').addEventListener('click', () => { sfx.unlock(); startNight(); });
+$('qClaim').addEventListener('click', claimQuest);
+$('menuBtn').addEventListener('click', () => { if (mode === 'day' || mode === 'night') { sfx.tap(); openMenu(); } });
+$('skill0').addEventListener('click', () => useSkill(0));
+$('skill1').addEventListener('click', () => useSkill(1));
+$('speedBtn').addEventListener('click', () => { SET.speed = SET.speed === 1 ? 2 : 1; saveSet(); renderNightPanel(true); sfx.tap(); });
+
+/* ================= screens & loop ================= */
+function frame(t) {
+  rafId = requestAnimationFrame(frame);
+  const dt = Math.min(0.05, Math.max(0, (t - lastT) / 1000)); lastT = t;
+  dusk += (duskTarget - dusk) * Math.min(1, dt * 2.2);
+  if (mode === 'night' && night && !night.ended && $('sheetWrap').hidden) {
+    let left = dt * SET.speed;
+    while (left > 0 && !night.ended) { const st = Math.min(left, 0.025); updateNight(st); left -= st; }
+    if (night && !night.ended) renderNightPanel();
+  } else lampHurt = Math.max(0, lampHurt - dt);
+  draw(t, dt);
+}
+function showGame() {
+  $('title').hidden = true; $('game').hidden = false;
+  resize();
+  if (!rafId) { lastT = performance.now(); rafId = requestAnimationFrame(frame); }
+}
+function toTitle() {
+  if (mode === 'night') { night = null; }
+  if (S && mode === 'day') save(); // a night in progress is never saved; the village resumes at that evening
+  mode = 'title'; placing = null; selected = -1; night = null;
+  cancelAnimationFrame(rafId); rafId = 0;
+  closeSheet();
+  $('game').hidden = true; $('title').hidden = false;
+  renderTitle();
+}
+function renderTitle() {
+  const saved = loadGame();
+  const cb = $('continueBtn'), nb = $('newBtn');
+  if (saved) { cb.hidden = false; cb.innerHTML = `<span>つづきから</span><small>${saved.day}日目 ・ 住民${saved.pop}人</small>`; nb.className = 'btn'; }
+  else { cb.hidden = true; nb.className = 'btn btn-amber'; }
+  nb.textContent = '新しい村をはじめる'; delete nb.dataset.armed;
+  $('titleBest').textContent = best > 0 ? `最高記録：${best}日 生き延びた` : '';
+}
+function startNewVillage() {
+  newGame(); night = null; fx.parts = []; fx.floats = []; fx.rings = []; popAt.clear();
+  showGame(); enterDay(); terrainC = null;
+  openHowTo(true);
+}
+$('continueBtn').addEventListener('click', () => {
+  sfx.unlock();
+  S = loadGame(); if (!S) { renderTitle(); return; }
+  showGame(); terrainC = null;
+  if (S.pendingEvent) { mode = 'report'; STAFF = staffing(); renderAll(); showEvent(S.pendingEvent); }
+  else enterDay();
+});
+$('newBtn').addEventListener('click', () => {
+  sfx.unlock();
+  const nb = $('newBtn');
+  if (loadGame() && !nb.dataset.armed) { nb.dataset.armed = '1'; nb.textContent = 'もう一度押すと新しく始めます（今の村は消えます）'; return; }
+  startNewVillage();
+});
+window.addEventListener('resize', () => { if (!$('game').hidden) resize(); });
+if ('ResizeObserver' in window) new ResizeObserver(() => { if (!$('game').hidden) resize(); }).observe(stage);
+document.addEventListener('visibilitychange', () => { if (document.hidden && S && mode === 'day') save(); });
+window.addEventListener('pagehide', () => { if (S && mode === 'day') save(); });
+if (document.fonts && document.fonts.load) { document.fonts.load('20px "Zen Kaku Gothic New"').catch(() => {}); }
+renderTitle();
+</script>
+</body>
+</html>
