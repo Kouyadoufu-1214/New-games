@@ -1,0 +1,1525 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>ハコニワブロック</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="ブロックを置いて列を消し、集めた★で自分だけの箱庭の島を育てるパズルゲーム">
+<meta name="theme-color" content="#bfe6fb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ハコニワ">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap">
+<style>
+:root{
+  /* Layout: a one-screen toy table. Sky backdrop, a carved wooden board, painted-wood blocks;
+     home is a scrolling diorama of the player's floating island. */
+  --sky-1:#bfe6fb; --sky-2:#eef7e4;
+  --paper:#fffaf0; --paper-2:#f5edda; --line:#eadfc6;
+  --ink:#2f2a26; --ink-soft:#756c62;
+  --accent:#e0522a; --accent-edge:#a83b1b; --accent-ink:#fffaf0;
+  --blue:#2f7fca; --blue-edge:#215f99; --blue-ink:#fffaf0;
+  --leaf:#3f8f5a; --leaf-edge:#2c6a41; --leaf-ink:#fffaf0;
+  --gold:#f2a516; --gold-edge:#b5780a; --gold-ink:#3a2a08;
+  --btn-edge:#d8c9a8; --focus:#2f7fca; --scrim:rgba(47,42,38,.38);
+  --wood:#e0b47c; --wood-2:#c99256; --wood-cell:#b98448; --wood-hole:#a9763f;
+  --wood-grain:rgba(120,70,20,.12); --board-shadow:rgba(90,60,25,.22); --shelf:rgba(255,250,240,.5);
+  --b1:#e4572e; --b2:#f2b134; --b3:#4fa36b; --b4:#3c8dd9; --b5:#8e5bb5; --b6:#f08a4b; --b-grey:#a69d90;
+  --tile-ink:#fffaf0;
+  --dio-1:#a9dcf7; --dio-2:#e6f5fb;
+  --dio-deco:
+    radial-gradient(circle at 84% 22%, #fff6c9 0 5%, #ffe58a 5.5% 7.5%, transparent 8%),
+    radial-gradient(ellipse 12% 5% at 20% 22%, #ffffffe0 60%, transparent 63%),
+    radial-gradient(ellipse 8% 4% at 28% 17%, #ffffffe0 60%, transparent 63%),
+    radial-gradient(ellipse 10% 4% at 62% 12%, #ffffffb0 60%, transparent 63%);
+  --grass-1:#93d47f; --grass-2:#62b35f; --grass-rim:#4b9850;
+  --soil-1:#b07b4d; --soil-2:#7b5134; --item-shadow:rgba(40,70,30,.25);
+  --font-display:"Dela Gothic One","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  --font-body:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --sky-1:#17203b; --sky-2:#2b2c52;
+    --paper:#242a47; --paper-2:#2e3558; --line:#3b4370;
+    --ink:#f4efe6; --ink-soft:#aab0cf;
+    --accent:#e85a32; --accent-edge:#9c3a1d; --accent-ink:#fffaf0;
+    --blue:#3a86d0; --blue-edge:#22578c; --blue-ink:#fffaf0;
+    --leaf:#3f8f5a; --leaf-edge:#23573a; --leaf-ink:#fffaf0;
+    --gold:#ffc54a; --gold-edge:#b3801a; --gold-ink:#2e2106;
+    --btn-edge:#151a31; --focus:#ffc54a; --scrim:rgba(5,8,20,.6);
+    --wood:#8a6442; --wood-2:#6a4a30; --wood-cell:#573c27; --wood-hole:#4a3220;
+    --wood-grain:rgba(0,0,0,.16); --board-shadow:rgba(0,0,0,.38); --shelf:rgba(255,255,255,.06);
+    --b1:#ff6b45; --b2:#ffc14d; --b3:#5cc184; --b4:#5aa6f0; --b5:#a77ad6; --b6:#ff9b5a; --b-grey:#5d5b72;
+    --tile-ink:#fffaf0;
+    --dio-1:#141c3a; --dio-2:#2e3466;
+    --dio-deco:
+      radial-gradient(circle at 81% 19%, #182042 0 4.6%, transparent 5%),
+      radial-gradient(circle at 84% 22%, #fff4d1 0 5%, transparent 5.4%),
+      radial-gradient(circle at 12% 16%, #fff 0 .35%, transparent .6%),
+      radial-gradient(circle at 26% 30%, #fff 0 .3%, transparent .55%),
+      radial-gradient(circle at 44% 10%, #fff 0 .4%, transparent .65%),
+      radial-gradient(circle at 60% 24%, #fff 0 .3%, transparent .55%),
+      radial-gradient(circle at 70% 8%, #fff 0 .35%, transparent .6%),
+      radial-gradient(circle at 93% 36%, #fff 0 .3%, transparent .55%),
+      radial-gradient(circle at 6% 40%, #fff 0 .3%, transparent .55%);
+    --grass-1:#56a372; --grass-2:#3b7d56; --grass-rim:#2e6545;
+    --soil-1:#6f4a30; --soil-2:#4b3020; --item-shadow:rgba(0,0,0,.35);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --sky-1:#17203b; --sky-2:#2b2c52;
+  --paper:#242a47; --paper-2:#2e3558; --line:#3b4370;
+  --ink:#f4efe6; --ink-soft:#aab0cf;
+  --accent:#e85a32; --accent-edge:#9c3a1d; --accent-ink:#fffaf0;
+  --blue:#3a86d0; --blue-edge:#22578c; --blue-ink:#fffaf0;
+  --leaf:#3f8f5a; --leaf-edge:#23573a; --leaf-ink:#fffaf0;
+  --gold:#ffc54a; --gold-edge:#b3801a; --gold-ink:#2e2106;
+  --btn-edge:#151a31; --focus:#ffc54a; --scrim:rgba(5,8,20,.6);
+  --wood:#8a6442; --wood-2:#6a4a30; --wood-cell:#573c27; --wood-hole:#4a3220;
+  --wood-grain:rgba(0,0,0,.16); --board-shadow:rgba(0,0,0,.38); --shelf:rgba(255,255,255,.06);
+  --b1:#ff6b45; --b2:#ffc14d; --b3:#5cc184; --b4:#5aa6f0; --b5:#a77ad6; --b6:#ff9b5a; --b-grey:#5d5b72;
+  --tile-ink:#fffaf0;
+  --dio-1:#141c3a; --dio-2:#2e3466;
+  --dio-deco:
+    radial-gradient(circle at 81% 19%, #182042 0 4.6%, transparent 5%),
+    radial-gradient(circle at 84% 22%, #fff4d1 0 5%, transparent 5.4%),
+    radial-gradient(circle at 12% 16%, #fff 0 .35%, transparent .6%),
+    radial-gradient(circle at 26% 30%, #fff 0 .3%, transparent .55%),
+    radial-gradient(circle at 44% 10%, #fff 0 .4%, transparent .65%),
+    radial-gradient(circle at 60% 24%, #fff 0 .3%, transparent .55%),
+    radial-gradient(circle at 70% 8%, #fff 0 .35%, transparent .6%),
+    radial-gradient(circle at 93% 36%, #fff 0 .3%, transparent .55%),
+    radial-gradient(circle at 6% 40%, #fff 0 .3%, transparent .55%);
+  --grass-1:#56a372; --grass-2:#3b7d56; --grass-rim:#2e6545;
+  --soil-1:#6f4a30; --soil-2:#4b3020; --item-shadow:rgba(0,0,0,.35);
+  color-scheme:dark;
+}
+
+html{box-sizing:border-box;height:100%;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);background-color:var(--sky-1);overscroll-behavior:none}
+*,*::before,*::after{box-sizing:inherit}
+body{height:100%;margin:0;overflow:hidden;font-family:var(--font-body);font-size:15px;line-height:1.5;color:var(--ink);
+  background-color:var(--sky-1);background-image:linear-gradient(180deg,var(--sky-1) 0%,var(--sky-2) 100%);
+  overscroll-behavior:none;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-text-size-adjust:100%}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit}
+h1,h2,p{margin:0}
+
+.screen{height:100%;display:flex;flex-direction:column;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.screen>*{width:100%;max-width:520px;margin-inline:auto}
+#home{overflow-y:auto;-webkit-overflow-scrolling:touch;padding-block:14px 28px;gap:14px}
+#home>*{flex:none}
+#game>*{max-width:560px}
+
+/* ---------- shared controls ---------- */
+.btn{--edge:var(--btn-edge);border:0;border-radius:20px;padding:13px 18px;cursor:pointer;touch-action:manipulation;font-weight:800;font-size:15px;
+  background:var(--paper);color:var(--ink);box-shadow:0 5px 0 var(--edge);transition:transform .08s ease,box-shadow .08s ease;
+  display:flex;align-items:center;justify-content:center;gap:8px;text-align:center}
+.btn:active:not([disabled]){transform:translateY(4px);box-shadow:0 1px 0 var(--edge)}
+.btn[disabled]{opacity:.45;cursor:default}
+.btn:focus-visible,.icon-btn:focus-visible,.link-btn:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+.btn small{font-size:12px;font-weight:700;opacity:.92;line-height:1.35}
+.btn-primary{--edge:var(--accent-edge);background:var(--accent);color:var(--accent-ink)}
+.btn-sub{background:var(--paper-2);border:2px solid var(--line)}
+.icon-btn{width:42px;height:42px;flex:none;border-radius:50%;border:2px solid var(--line);background:var(--paper);display:grid;place-items:center;cursor:pointer;
+  box-shadow:0 3px 0 var(--btn-edge);touch-action:manipulation;padding:0}
+.icon-btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--btn-edge)}
+.icon-btn svg{width:20px;height:20px;fill:none;stroke:var(--ink);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.link-btn{background:none;border:0;padding:6px 4px;font-weight:700;font-size:13px;color:var(--ink-soft);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.star-ico{width:20px;height:20px;fill:var(--gold);flex:none}
+.bar{height:9px;border-radius:99px;background:var(--paper-2);overflow:hidden;border:1px solid var(--line)}
+.bar>i{display:block;height:100%;width:0;background:var(--gold);border-radius:inherit;transition:width .5s ease}
+
+/* ---------- home ---------- */
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.logo{display:flex;flex-direction:column;gap:5px;line-height:1}
+.logo-tiles{display:flex;gap:4px}
+.logo-tiles span{width:32px;height:32px;display:grid;place-items:center;border-radius:9px;background:var(--c);color:var(--tile-ink);
+  font-family:var(--font-display);font-weight:400;font-size:19px;box-shadow:inset 0 -4px 0 rgba(0,0,0,.18),0 3px 0 rgba(0,0,0,.08);transform:rotate(var(--r))}
+.logo-sub{font-family:var(--font-display);font-weight:400;font-size:12px;letter-spacing:.5em;color:var(--ink-soft);padding-left:3px}
+.top-right{display:flex;align-items:center;gap:8px}
+.stars-chip{display:flex;align-items:center;gap:6px;background:var(--paper);border:2px solid var(--line);border-radius:999px;padding:5px 13px 5px 9px;
+  font-weight:800;font-size:17px;font-variant-numeric:tabular-nums;box-shadow:0 3px 0 var(--btn-edge)}
+.stars-chip.bump{animation:bump .4s ease}
+
+.streak{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12.5px;font-weight:700;color:var(--ink-soft)}
+.streak b{color:var(--ink)}
+.pips7{display:flex;gap:4px}
+.pips7 i{width:9px;height:9px;border-radius:3px;background:var(--line)}
+.pips7 i.on{background:var(--b6)}
+
+.island-card{background:var(--paper);border:2px solid var(--line);border-radius:24px;overflow:hidden;box-shadow:0 5px 0 var(--btn-edge)}
+.diorama{position:relative;aspect-ratio:16/10.5;max-width:100%;background-color:var(--dio-1);
+  background-image:var(--dio-deco),linear-gradient(180deg,var(--dio-1),var(--dio-2));container-type:inline-size;overflow:hidden}
+.island{position:absolute;left:6%;right:6%;top:36%;height:52%;animation:float 6s ease-in-out infinite}
+.island-under{position:absolute;left:8%;right:8%;top:30%;bottom:0;background:linear-gradient(180deg,var(--soil-1),var(--soil-2));
+  clip-path:polygon(0 0,100% 0,92% 28%,76% 60%,60% 100%,47% 84%,31% 70%,12% 38%)}
+.island-top{position:absolute;left:0;right:0;top:0;height:62%;border-radius:50%;
+  background:radial-gradient(ellipse at 44% 32%,var(--grass-1),var(--grass-2) 72%);box-shadow:0 7px 0 var(--grass-rim)}
+.items{position:absolute;left:0;right:0;top:0;height:62%}
+.item{position:absolute;transform:translate(-50%,-88%);transform-origin:50% 100%;line-height:1;
+  font-size:calc(var(--s) * 3.3px);font-size:calc(var(--s) * 1cqw);
+  font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
+.item::after{content:"";position:absolute;left:16%;right:16%;bottom:-.04em;height:.16em;border-radius:50%;background:var(--item-shadow);z-index:-1}
+.item.pop{animation:pop .75s cubic-bezier(.2,1.6,.4,1) both}
+.item.hop{animation:hop 3.2s ease-in-out infinite}
+.item.next{width:1.35em;height:1.35em;border-radius:50%;border:2px dashed var(--tile-ink);display:grid;place-items:center;
+  font-family:var(--font-display);color:var(--tile-ink);font-size:calc(4.4 * 3.3px);font-size:4.4cqw;opacity:.85;animation:pulse 1.8s ease-in-out infinite}
+.item.next::after{display:none}
+
+.island-info{display:flex;flex-direction:column;gap:12px;padding:14px 16px 16px}
+.island-stats{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;font-weight:700;color:var(--ink-soft)}
+.island-stats b{color:var(--ink);font-variant-numeric:tabular-nums}
+.build-row{display:flex;align-items:center;gap:12px}
+.next-thumb{width:50px;height:50px;flex:none;border-radius:14px;background:var(--paper-2);display:grid;place-items:center;font-size:28px;border:2px solid var(--line)}
+.next-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.next-name{font-weight:800;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.next-cost{font-size:12px;font-weight:700;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.btn-build{--edge:var(--leaf-edge);flex:none;padding:11px 16px;background:var(--leaf);color:var(--leaf-ink)}
+
+.btn-play{--edge:var(--accent-edge);background:var(--accent);color:var(--accent-ink);flex-direction:column;gap:3px;padding:16px 14px;min-height:82px}
+.btn-play .big{font-family:var(--font-display);font-weight:400;font-size:27px;letter-spacing:.06em;line-height:1.1}
+.btn-daily{--edge:var(--blue-edge);background:var(--blue);color:var(--blue-ink);justify-content:space-between;text-align:left;padding:14px 18px}
+.btn-daily .big{font-family:var(--font-display);font-weight:400;font-size:17px;line-height:1.2}
+.btn-daily .daily-text{display:flex;flex-direction:column;gap:3px;min-width:0}
+.btn-daily small{white-space:pre-line}
+.btn-daily .daily-date{flex:none;font-family:var(--font-display);font-weight:400;font-size:13px;background:rgba(255,255,255,.18);border-radius:12px;padding:6px 9px;line-height:1.1;text-align:center}
+
+.panel{background:var(--paper);border:2px solid var(--line);border-radius:22px;padding:14px 16px 16px;box-shadow:0 5px 0 var(--btn-edge)}
+.panel-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:12px}
+.panel-head h2{font-family:var(--font-display);font-weight:400;font-size:16px}
+.panel-head span{font-size:12px;color:var(--ink-soft);font-weight:700}
+.missions{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.mission{display:flex;align-items:center;gap:12px}
+.m-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.m-label{font-weight:700;font-size:14px;line-height:1.35}
+.m-prog{font-size:11.5px;color:var(--ink-soft);font-weight:700;font-variant-numeric:tabular-nums}
+.btn-claim{flex:none;min-width:84px;padding:9px 10px;border-radius:14px;font-size:13px}
+.btn-claim.ready{--edge:var(--gold-edge);background:var(--gold);color:var(--gold-ink)}
+.btn-claim.done{box-shadow:none;background:transparent;color:var(--ink-soft);opacity:1}
+.home-foot{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11.5px;color:var(--ink-soft);padding-top:2px}
+
+/* ---------- game ---------- */
+.hud{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding-block:10px 0}
+.hud-center{text-align:center;min-width:0}
+.hud-mode{font-size:11px;font-weight:800;letter-spacing:.14em;color:var(--ink-soft)}
+.hud-score{font-family:var(--font-display);font-weight:400;font-size:34px;line-height:1.08;font-variant-numeric:tabular-nums}
+.hud-right{justify-self:end;text-align:right;font-size:12px;font-weight:700;color:var(--ink-soft);display:flex;flex-direction:column;gap:1px;line-height:1.3}
+.hud-right b{color:var(--ink);font-size:15px;font-variant-numeric:tabular-nums}
+.stage{flex:1;min-height:0;position:relative;touch-action:none}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.combo-chip{position:absolute;top:4px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;white-space:nowrap;
+  background:var(--ink);color:var(--paper);border-radius:99px;padding:4px 12px 4px 13px;font-weight:800;font-size:12.5px;z-index:2;pointer-events:none}
+.combo-chip b{font-family:var(--font-display);font-weight:400;font-size:16px;color:var(--gold)}
+.combo-chip.bump{animation:bumpx .32s ease}
+.pips{display:flex;gap:3px}
+.pips i{width:7px;height:7px;border-radius:50%;background:var(--gold)}
+.pips i.off{background:transparent;box-shadow:inset 0 0 0 1.5px var(--ink-soft)}
+
+/* ---------- overlays ---------- */
+.overlay{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:var(--scrim);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:calc(16px + env(safe-area-inset-top,0px)) calc(16px + env(safe-area-inset-bottom,0px))}
+.sheet{width:100%;max-width:400px;max-height:100%;overflow-y:auto;background:var(--paper);border:2px solid var(--line);border-radius:26px;
+  padding:22px 20px 20px;box-shadow:0 8px 0 var(--btn-edge);display:flex;flex-direction:column;gap:14px;animation:rise .38s cubic-bezier(.2,1.3,.4,1) both}
+.sheet-title{font-family:var(--font-display);font-weight:400;font-size:22px;text-align:center}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.steps li{display:flex;gap:12px;align-items:flex-start}
+.steps .num{width:30px;height:30px;flex:none;border-radius:9px;display:grid;place-items:center;font-family:var(--font-display);color:var(--tile-ink);
+  background:var(--c);box-shadow:inset 0 -3px 0 rgba(0,0,0,.18)}
+.steps b{display:block;font-size:15px}
+.steps p{font-size:13px;color:var(--ink-soft);line-height:1.55}
+.note{font-size:12.5px;color:var(--ink-soft);text-align:center;background:var(--paper-2);border-radius:14px;padding:9px 12px}
+
+.over-head{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center}
+.kicker{font-size:13px;font-weight:800;color:var(--ink-soft)}
+.over-score{font-family:var(--font-display);font-weight:400;font-size:52px;line-height:1.1;font-variant-numeric:tabular-nums}
+.ribbon{background:var(--gold);color:var(--gold-ink);font-weight:800;font-size:12.5px;padding:3px 12px;border-radius:99px;animation:bump .5s ease .2s both}
+.over-stats{font-size:12.5px;font-weight:700;color:var(--ink-soft);margin-top:4px}
+.earn{margin:0;display:flex;flex-direction:column;gap:6px;background:var(--paper-2);border-radius:16px;padding:12px 14px}
+.earn div{display:flex;justify-content:space-between;gap:10px;font-size:13.5px}
+.earn dt{color:var(--ink-soft);font-weight:700}
+.earn dd{margin:0;font-weight:800;font-variant-numeric:tabular-nums}
+.earn .earn-total{border-top:2px dashed var(--line);padding-top:7px;margin-top:2px;font-size:16px}
+.earn .earn-total dt{color:var(--ink)}
+.earn .earn-total dd{color:var(--ink);font-family:var(--font-display);font-weight:400}
+.share{display:flex;flex-direction:column;gap:8px}
+.share pre{margin:0;white-space:pre-wrap;word-break:break-all;font-family:var(--font-body);font-size:13px;font-weight:700;line-height:1.6;
+  background:var(--paper-2);border-radius:14px;padding:10px 12px;-webkit-user-select:text;user-select:text}
+.btn-revive{--edge:var(--leaf-edge);background:var(--leaf);color:var(--leaf-ink);flex-direction:column;gap:1px}
+.sheet-actions{display:grid;grid-template-columns:1fr 1.4fr;gap:10px}
+
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);transform:translate(-50%,-160%);z-index:40;
+  background:var(--ink);color:var(--paper);font-weight:800;font-size:13.5px;padding:10px 16px;border-radius:99px;
+  width:max-content;max-width:calc(100% - 32px);text-align:center;transition:transform .35s cubic-bezier(.2,1.3,.4,1);pointer-events:none}
+.toast.show{transform:translate(-50%,0)}
+
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.2%)}}
+@keyframes pop{0%{transform:translate(-50%,-88%) scale(0)}60%{transform:translate(-50%,-88%) scale(1.3)}100%{transform:translate(-50%,-88%) scale(1)}}
+@keyframes hop{0%,80%,100%{transform:translate(-50%,-88%)}86%{transform:translate(-50%,-115%)}92%{transform:translate(-50%,-88%)}}
+@keyframes pulse{0%,100%{opacity:.45}50%{opacity:.95}}
+@keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.18)}100%{transform:scale(1)}}
+@keyframes bumpx{0%{transform:translateX(-50%) scale(1)}40%{transform:translateX(-50%) scale(1.22)}100%{transform:translateX(-50%) scale(1)}}
+@keyframes rise{0%{transform:translateY(40px);opacity:0}100%{transform:none;opacity:1}}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+
+<section id="home" class="screen" aria-label="ホーム">
+  <header class="topbar">
+    <h1 class="logo" aria-label="ハコニワブロック">
+      <span class="logo-tiles" aria-hidden="true">
+        <span style="--c:var(--b1);--r:-5deg">ハ</span><span style="--c:var(--b2);--r:3deg">コ</span><span style="--c:var(--b3);--r:-2deg">ニ</span><span style="--c:var(--b4);--r:5deg">ワ</span>
+      </span>
+      <span class="logo-sub" aria-hidden="true">ブロック</span>
+    </h1>
+    <div class="top-right">
+      <div class="stars-chip" id="starsChip" aria-label="持っている★">
+        <svg class="star-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.4l-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/></svg>
+        <b id="homeStars">0</b>
+      </div>
+      <button class="icon-btn" id="soundBtn" type="button" aria-label="効果音のオンオフ"></button>
+    </div>
+  </header>
+
+  <div class="streak" id="streak">
+    <span>ログイン <b id="streakDays">1</b>日連続</span>
+    <span class="pips7" id="streakPips" aria-hidden="true"></span>
+    <span id="streakNote"></span>
+  </div>
+
+  <div class="island-card">
+    <div class="diorama" aria-label="あなたの島">
+      <div class="island">
+        <div class="island-under"></div>
+        <div class="island-top"></div>
+        <div class="items" id="islandItems"></div>
+      </div>
+    </div>
+    <div class="island-info">
+      <div class="island-stats">
+        <span>島レベル <b id="islandLv">0</b> / <span id="islandMax">16</span></span>
+        <span>★ボーナス <b id="islandBonus">+0%</b></span>
+      </div>
+      <div class="build-row">
+        <div class="next-thumb" id="nextEmoji" aria-hidden="true"></div>
+        <div class="next-info">
+          <div class="next-name" id="nextName"></div>
+          <div class="bar"><i id="nextBar"></i></div>
+          <div class="next-cost" id="nextCost"></div>
+        </div>
+        <button class="btn btn-build" id="buildBtn" type="button">建てる</button>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn btn-play" id="playBtn" type="button">
+    <span class="big" id="playLabel">あそぶ</span>
+    <small id="playSub"></small>
+  </button>
+  <button class="btn btn-daily" id="dailyBtn" type="button">
+    <span class="daily-text">
+      <span class="big">今日のチャレンジ</span>
+      <small id="dailySub"></small>
+    </span>
+    <span class="daily-date" id="dailyDate"></span>
+  </button>
+
+  <section class="panel" aria-labelledby="missionTitle">
+    <div class="panel-head">
+      <h2 id="missionTitle">今日のミッション</h2>
+      <span id="missionTimer"></span>
+    </div>
+    <ul class="missions" id="missionList"></ul>
+  </section>
+
+  <div class="home-foot">
+    <button class="link-btn" id="howBtn" type="button">あそびかた</button>
+    <span>記録はこの端末のブラウザに保存されます</span>
+  </div>
+</section>
+
+<section id="game" class="screen" aria-label="ゲーム" hidden>
+  <header class="hud">
+    <button class="icon-btn" id="backBtn" type="button" aria-label="ホームへ戻る（続きは保存されます）">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+    </button>
+    <div class="hud-center">
+      <div class="hud-mode" id="hudMode">フリープレイ</div>
+      <div class="hud-score" id="hudScore">0</div>
+    </div>
+    <div class="hud-right">
+      <span>ベスト <b id="hudBest">0</b></span>
+      <span id="hudSub"></span>
+    </div>
+  </header>
+  <div class="stage" id="stage">
+    <div class="combo-chip" id="comboChip" hidden><b id="comboN">2</b>コンボ<span class="pips" id="comboPips"><i></i><i></i><i></i></span></div>
+    <canvas id="cv" aria-label="ゲーム盤面"></canvas>
+  </div>
+</section>
+
+<div class="overlay" id="tutorial" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="tutTitle">
+    <h2 class="sheet-title" id="tutTitle">あそびかた</h2>
+    <ol class="steps">
+      <li><span class="num" style="--c:var(--b1)">1</span><div><b>ブロックを盤面へドラッグ</b><p>下に並んだ3つのブロックを、好きな場所に置きます。指の少し上に表示されるので、狙った位置が見えます。</p></div></li>
+      <li><span class="num" style="--c:var(--b4)">2</span><div><b>縦か横を1列そろえると消える</b><p>続けて消すとコンボで点数アップ。3手続けて消せないとコンボが途切れます。</p></div></li>
+      <li><span class="num" style="--c:var(--b3)">3</span><div><b>芽のついたブロックを消すと★</b><p>★を使って島に建物を建てると、次からもらえる★が増えます。</p></div></li>
+    </ol>
+    <p class="note">時間制限はありません。置ける場所がなくなったら終わりです。</p>
+    <button class="btn btn-primary" id="tutOk" type="button">はじめる</button>
+  </div>
+</div>
+
+<div class="overlay" id="overOverlay" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="overKicker">
+    <div class="over-head">
+      <div class="kicker" id="overKicker"></div>
+      <div class="over-score" id="overScore">0</div>
+      <div class="ribbon" id="overRecord" hidden>自己ベスト更新</div>
+      <div class="over-stats" id="overStats"></div>
+    </div>
+    <dl class="earn">
+      <div><dt>スコアから</dt><dd id="eScore"></dd></div>
+      <div><dt>芽から</dt><dd id="eSeed"></dd></div>
+      <div><dt id="eBonusLabel">島ボーナス</dt><dd id="eBonus"></dd></div>
+      <div id="eDailyRow" hidden><dt>今日の初回ボーナス</dt><dd id="eDaily"></dd></div>
+      <div class="earn-total"><dt>もらえる★</dt><dd id="eTotal"></dd></div>
+    </dl>
+    <div class="share" id="shareBox" hidden>
+      <pre id="shareText"></pre>
+      <button class="btn btn-sub" id="copyBtn" type="button">結果をコピー</button>
+    </div>
+    <button class="btn btn-revive" id="reviveBtn" type="button" hidden>
+      <span id="reviveLabel">おたすけで続ける</span>
+      <small>いちばん詰まった縦横4列を片づけます</small>
+    </button>
+    <div class="sheet-actions">
+      <button class="btn btn-sub" id="overHome" type="button">ホーム</button>
+      <button class="btn btn-primary" id="overRetry" type="button">もう一回</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+'use strict';
+document.documentElement.lang = 'ja';
+const $ = (id) => document.getElementById(id);
+const N = 8;
+const DAILY_PIECES = 30;
+const REVIVE_COST = 15;
+const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const SAVE_KEY = 'hakoniwa-block:save:v1';
+const RUN_KEY = 'hakoniwa-block:run:v1';
+const fmt = (n) => Math.round(n).toLocaleString('ja-JP');
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const now = () => performance.now();
+
+/* ---------- storage (may be unavailable) ---------- */
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* ignore */ } },
+  del(k) { try { localStorage.removeItem(k); } catch (e) { /* ignore */ } },
+};
+
+/* ---------- dates & seeded random ---------- */
+function dayKey(d = new Date()) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function yesterdayKey() { const d = new Date(); d.setDate(d.getDate() - 1); return dayKey(d); }
+function hashStr(s) { let h = 2166136261 >>> 0; for (const ch of s) { h ^= ch.codePointAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+function mix(state) {
+  let t = state;
+  t = Math.imul(t ^ (t >>> 15), t | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
+function makeRand(seed) { let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) >>> 0; return mix(s); }; }
+
+/* ---------- shapes ---------- */
+const BASES = [
+  { p: '#', w: 2.5, rot: false },
+  { p: '##', w: 4 },
+  { p: '###', w: 4 },
+  { p: '####', w: 3 },
+  { p: '#####', w: 1.4 },
+  { p: '##\n##', w: 4, rot: false },
+  { p: '###\n###\n###', w: 1.1, rot: false },
+  { p: '###\n###', w: 2 },
+  { p: '##\n#.', w: 4 },
+  { p: '###\n#..\n#..', w: 1.6 },
+  { p: '#..\n###', w: 3, mirror: true },
+  { p: '###\n.#.', w: 2.4 },
+  { p: '.##\n##.', w: 2, mirror: true },
+];
+function normCells(cells) {
+  const mr = Math.min(...cells.map((x) => x[0])), mc = Math.min(...cells.map((x) => x[1]));
+  return cells.map(([r, c]) => [r - mr, c - mc]).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+}
+function parseShape(p) {
+  const cells = [];
+  p.split('\n').forEach((row, r) => [...row].forEach((ch, c) => { if (ch === '#') cells.push([r, c]); }));
+  return normCells(cells);
+}
+const rotCells = (cells) => normCells(cells.map(([r, c]) => [c, -r]));
+const mirCells = (cells) => normCells(cells.map(([r, c]) => [r, -c]));
+const SHAPES = [];
+BASES.forEach((b) => {
+  const variants = [], seen = new Set();
+  const base = parseShape(b.p);
+  for (const form of (b.mirror ? [base, mirCells(base)] : [base])) {
+    let x = form;
+    for (let i = 0; i < (b.rot === false ? 1 : 4); i++) {
+      const k = x.map((v) => v.join(',')).join(';');
+      if (!seen.has(k)) { seen.add(k); variants.push(x); }
+      x = rotCells(x);
+    }
+  }
+  variants.forEach((v) => SHAPES.push({
+    cells: v, n: v.length,
+    h: Math.max(...v.map((x) => x[0])) + 1,
+    w: Math.max(...v.map((x) => x[1])) + 1,
+    weight: b.w / variants.length,
+  }));
+});
+const SMALLEST = SHAPES.map((s, i) => i).sort((a, b) => SHAPES[a].n - SHAPES[b].n);
+
+/* ---------- island & missions data ---------- */
+const BUILDINGS = [
+  { e: '🌱', n: '芽', cost: 10, x: 46, y: 76, s: 6 },
+  { e: '🌷', n: 'チューリップ', cost: 20, x: 33, y: 78, s: 6 },
+  { e: '🌳', n: '木', cost: 35, x: 24, y: 46, s: 8.5 },
+  { e: '🍄', n: 'きのこ', cost: 50, x: 32, y: 60, s: 5.5 },
+  { e: '🏠', n: '小さな家', cost: 80, x: 61, y: 42, s: 9 },
+  { e: '🐔', n: 'にわとり', cost: 110, x: 71, y: 64, s: 5.5, hop: true },
+  { e: '🌻', n: 'ひまわり', cost: 150, x: 20, y: 66, s: 6.5 },
+  { e: '⛲', n: '噴水', cost: 200, x: 50, y: 56, s: 7.5 },
+  { e: '🐑', n: 'ひつじ', cost: 260, x: 81, y: 50, s: 6.5, hop: true },
+  { e: '🏡', n: '庭つきの家', cost: 330, x: 39, y: 34, s: 9 },
+  { e: '⛺', n: 'テント', cost: 420, x: 63, y: 80, s: 7 },
+  { e: '🌲', n: 'もみの木', cost: 520, x: 12, y: 52, s: 8.5 },
+  { e: '🎠', n: 'メリーゴーランド', cost: 640, x: 77, y: 32, s: 9 },
+  { e: '🗼', n: 'タワー', cost: 780, x: 25, y: 26, s: 12 },
+  { e: '🎡', n: '観覧車', cost: 950, x: 88, y: 62, s: 10 },
+  { e: '🏰', n: 'お城', cost: 1200, x: 54, y: 20, s: 13 },
+];
+const MISSIONS = {
+  lines: { t: [15, 25, 40], r: [20, 30, 45], label: (n) => `ラインを${n}本消す` },
+  seeds: { t: [4, 8, 12], r: [20, 30, 45], label: (n) => `芽つきブロックを${n}個消す` },
+  combo: { t: [3, 5, 7], r: [20, 30, 45], label: (n) => `${n}コンボを出す`, max: true },
+  score: { t: [1500, 3000, 5000], r: [20, 30, 45], label: (n) => `1回のゲームで${fmt(n)}点`, max: true },
+  multi: { t: [2, 3], r: [25, 45], label: (n) => `${n}ラインを同時に消す`, max: true },
+  daily: { t: [1], r: [25], label: () => '今日のチャレンジを遊ぶ' },
+  place: { t: [40, 80], r: [20, 35], label: (n) => `ブロックを${n}個置く` },
+};
+function genMissions(day) {
+  const rand = makeRand(hashStr('missions-' + day));
+  const keys = Object.keys(MISSIONS);
+  for (let i = keys.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [keys[i], keys[j]] = [keys[j], keys[i]]; }
+  return keys.slice(0, 3).map((k) => {
+    const def = MISSIONS[k], tier = Math.floor(rand() * def.t.length);
+    return { k, target: def.t[tier], reward: def.r[tier], prog: 0, claimed: false };
+  });
+}
+const missionLabel = (m) => MISSIONS[m.k].label(m.target);
+
+/* ---------- save ---------- */
+function defaultSave() {
+  return {
+    v: 1, stars: 0, best: 0, buildings: 0, sound: true, tutorial: false,
+    login: { last: '', streak: 0 },
+    daily: { date: '', best: 0, rewarded: false },
+    missions: { date: '', items: [], bonus: false },
+    freeRevive: '',
+    stats: { games: 0, lines: 0, seeds: 0 },
+  };
+}
+function loadSave() {
+  const d = defaultSave(), s = store.get(SAVE_KEY, null);
+  if (!s || typeof s !== 'object') return d;
+  return {
+    ...d, ...s,
+    login: { ...d.login, ...(s.login || {}) },
+    daily: { ...d.daily, ...(s.daily || {}) },
+    missions: s.missions && Array.isArray(s.missions.items) ? s.missions : d.missions,
+    stats: { ...d.stats, ...(s.stats || {}) },
+  };
+}
+let save = loadSave();
+const persist = () => store.set(SAVE_KEY, save);
+
+function dailyRollover() {
+  const t = dayKey();
+  let msg = null;
+  if (save.login.last !== t) {
+    save.login.streak = save.login.last === yesterdayKey() ? save.login.streak + 1 : 1;
+    save.login.last = t;
+    const bonus = 5 * Math.min(save.login.streak, 7);
+    save.stars += bonus;
+    msg = `ログインボーナス ★+${bonus}（${save.login.streak}日連続）`;
+  }
+  if (save.daily.date !== t) save.daily = { date: t, best: 0, rewarded: false };
+  if (save.missions.date !== t) save.missions = { date: t, items: genMissions(t), bonus: false };
+  persist();
+  return msg;
+}
+function bump(k, v, isMax = false) {
+  for (const m of save.missions.items) {
+    if (m.k !== k || m.claimed) continue;
+    const before = m.prog;
+    m.prog = isMax ? Math.max(m.prog, v) : m.prog + v;
+    if (before < m.target && m.prog >= m.target) { toast(`ミッション達成：${missionLabel(m)}`); sfx.coin(); }
+  }
+}
+
+/* ---------- sound & haptics ---------- */
+const sfx = (() => {
+  let ac = null, master = null;
+  function ensure() {
+    if (!save.sound) return null;
+    if (!ac) {
+      try {
+        ac = new (window.AudioContext || window.webkitAudioContext)();
+        master = ac.createGain(); master.gain.value = 0.32; master.connect(ac.destination);
+      } catch (e) { ac = null; return null; }
+    }
+    if (ac.state === 'suspended') ac.resume().catch(() => {});
+    return ac;
+  }
+  function tone(freq, dur, type = 'sine', vol = 0.5, when = 0, slideTo = 0) {
+    const a = ensure(); if (!a) return;
+    const t = a.currentTime + when;
+    const o = a.createOscillator(), g = a.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, t);
+    if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 0.03);
+  }
+  const P = [523.25, 587.33, 659.25, 783.99, 880, 1046.5, 1174.66, 1318.51, 1567.98, 1760, 2093];
+  return {
+    unlock() { ensure(); },
+    pick() { tone(540, 0.05, 'triangle', 0.22); },
+    place() { tone(200, 0.09, 'triangle', 0.5, 0, 120); tone(96, 0.07, 'sine', 0.3); },
+    bad() { tone(150, 0.14, 'sine', 0.28, 0, 90); },
+    clear(lines, combo) {
+      const start = Math.min(Math.max(combo - 1, 0), 5);
+      for (let i = 0; i < Math.min(lines + 1, 5); i++) tone(P[Math.min(start + i, P.length - 1)], 0.24, 'sine', 0.34, i * 0.055);
+    },
+    seed() { tone(1568, 0.08, 'triangle', 0.18, 0.04); tone(2093, 0.12, 'triangle', 0.16, 0.1); },
+    allclear() { [0, 2, 4, 5, 7, 9].forEach((k, i) => tone(P[k], 0.32, 'triangle', 0.3, i * 0.07)); },
+    over() { [659, 523, 440, 330].forEach((f, i) => tone(f, 0.26, 'sine', 0.28, i * 0.13)); },
+    build() { [0, 2, 4, 7, 9].forEach((k, i) => tone(P[k], 0.26, 'triangle', 0.28, i * 0.075)); },
+    coin() { tone(1318, 0.07, 'square', 0.1); tone(1760, 0.12, 'square', 0.09, 0.06); },
+  };
+})();
+function haptic(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) { /* ignore */ } }
+
+/* ---------- toast ---------- */
+const toastQ = []; let toastBusy = false;
+function toast(msg) { toastQ.length = 0; toastQ.push(msg); if (!toastBusy) nextToast(); } // keep only the newest pending message
+function nextToast() {
+  const m = toastQ.shift();
+  if (!m) { toastBusy = false; return; }
+  toastBusy = true;
+  const el = $('toast'); el.textContent = m; el.classList.add('show');
+  setTimeout(() => { el.classList.remove('show'); setTimeout(nextToast, 380); }, 2100);
+}
+function pulse(el, cls = 'bump') { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
+
+/* ---------- runs ---------- */
+const runs = { endless: null, daily: null };
+let run = null;
+const runKey = (m) => `${RUN_KEY}:${m}`;
+function loadRun(m) {
+  const r = store.get(runKey(m), null);
+  if (!r || !Array.isArray(r.board) || r.board.length !== N * N || !Array.isArray(r.tray) || r.tray.length !== 3) return null;
+  if (r.tray.some((p) => p && !SHAPES[p.s])) return null;
+  return r;
+}
+const saveRun = () => { if (run) store.set(runKey(run.mode), run); };
+function dropRun(m) { store.del(runKey(m)); runs[m] = null; }
+function newRun(mode) {
+  const t = dayKey();
+  return {
+    mode, date: t, board: Array(N * N).fill(0), seeds: Array(N * N).fill(0), tray: [null, null, null],
+    score: 0, combo: 0, miss: 0, seedsGot: 0, lines: 0, placed: 0, maxCombo: 0, maxMulti: 0,
+    revived: false, over: null, trayLog: [], trayLines: 0,
+    remaining: mode === 'daily' ? DAILY_PIECES : 0,
+    rng: mode === 'daily' ? hashStr('daily-' + t) : 0,
+  };
+}
+function dailyRand() { run.rng = (run.rng + 0x6D2B79F5) >>> 0; return mix(run.rng); }
+
+function canPlace(si, r0, c0, board = run.board) {
+  const sh = SHAPES[si];
+  if (r0 < 0 || c0 < 0 || r0 + sh.h > N || c0 + sh.w > N) return false;
+  for (const [r, c] of sh.cells) if (board[(r0 + r) * N + c0 + c]) return false;
+  return true;
+}
+function fits(si) {
+  const sh = SHAPES[si];
+  for (let r = 0; r <= N - sh.h; r++) for (let c = 0; c <= N - sh.w; c++) if (canPlace(si, r, c)) return true;
+  return false;
+}
+function fullLines(board) {
+  const rows = [], cols = [];
+  for (let r = 0; r < N; r++) { let f = true; for (let c = 0; c < N; c++) if (!board[r * N + c]) { f = false; break; } if (f) rows.push(r); }
+  for (let c = 0; c < N; c++) { let f = true; for (let r = 0; r < N; r++) if (!board[r * N + c]) { f = false; break; } if (f) cols.push(c); }
+  return { rows, cols };
+}
+function lineCells({ rows, cols }) {
+  const s = new Set();
+  rows.forEach((r) => { for (let c = 0; c < N; c++) s.add(r * N + c); });
+  cols.forEach((c) => { for (let r = 0; r < N; r++) s.add(r * N + c); });
+  return s;
+}
+function previewLines(si, r0, c0) {
+  const b = run.board.slice();
+  for (const [r, c] of SHAPES[si].cells) b[(r0 + r) * N + c0 + c] = 9;
+  return fullLines(b);
+}
+function wouldClear(si) {
+  const sh = SHAPES[si];
+  for (let r = 0; r <= N - sh.h; r++) for (let c = 0; c <= N - sh.w; c++) {
+    if (!canPlace(si, r, c)) continue;
+    const l = previewLines(si, r, c);
+    if (l.rows.length || l.cols.length) return true;
+  }
+  return false;
+}
+function pickShape(rand, d) {
+  let total = 0;
+  const ws = SHAPES.map((s) => {
+    let w = s.weight;
+    if (s.n >= 5) w *= 0.7 + d * 1.6;
+    if (s.n <= 2) w *= 1.2 - d * 0.6;
+    total += w; return w;
+  });
+  let x = rand() * total;
+  for (let i = 0; i < ws.length; i++) { x -= ws[i]; if (x <= 0) return i; }
+  return ws.length - 1;
+}
+function mkPiece(rand, si, chance) {
+  const c = 1 + Math.floor(rand() * 6);
+  const seed = rand() < chance ? Math.floor(rand() * SHAPES[si].n) : -1;
+  return { s: si, c, seed };
+}
+function dealTray(guarantee = false) {
+  const tray = [null, null, null];
+  if (run.mode === 'daily') {
+    for (let i = 0; i < 3 && run.remaining > 0; i++) {
+      tray[i] = mkPiece(dailyRand, pickShape(dailyRand, 0.3), 0.25);
+      run.remaining--;
+    }
+  } else {
+    const d = Math.min(1, run.score / 9000);
+    const ensure = guarantee || d < 0.6;
+    const tries = guarantee ? 40 : d < 0.6 ? 12 : Math.max(2, Math.round(12 - (d - 0.6) * 25));
+    const helpful = guarantee || Math.random() < 0.4 - d * 0.25;
+    for (let i = 0; i < 3; i++) {
+      let chosen = -1;
+      for (let t = 0; t < tries && chosen < 0; t++) {
+        const c = pickShape(Math.random, d);
+        if (i === 0 && helpful && t < tries / 2) { if (wouldClear(c)) chosen = c; continue; }
+        if (fits(c)) chosen = c;
+      }
+      if (chosen < 0) chosen = pickShape(Math.random, d);
+      tray[i] = mkPiece(Math.random, chosen, 0.22);
+    }
+    if (ensure && !tray.some((p) => fits(p.s))) {
+      const small = SMALLEST.find((si) => fits(si));
+      if (small !== undefined) tray[0] = mkPiece(Math.random, small, 0.22);
+    }
+  }
+  run.tray = tray;
+  fx.trayT = now();
+}
+
+function place(slot, r0, c0) {
+  const p = run.tray[slot], sh = SHAPES[p.s];
+  sh.cells.forEach(([r, c], i) => {
+    const idx = (r0 + r) * N + c0 + c;
+    run.board[idx] = p.c; run.seeds[idx] = i === p.seed ? 1 : 0;
+  });
+  run.tray[slot] = null;
+  run.placed++;
+  let gained = sh.n;
+  const lines = fullLines(run.board);
+  const L = lines.rows.length + lines.cols.length;
+  const cleared = [];
+  let seedsHere = 0, allClear = false;
+  if (L > 0) {
+    run.combo++; run.miss = 0;
+    const mult = Math.min(3, 1 + 0.25 * (run.combo - 1));
+    for (const idx of lineCells(lines)) {
+      cleared.push({ idx, color: run.board[idx], seed: run.seeds[idx] });
+      if (run.seeds[idx]) seedsHere++;
+      run.board[idx] = 0; run.seeds[idx] = 0;
+    }
+    gained += Math.round((100 * L + 50 * L * (L - 1)) * mult) + seedsHere * 50;
+    allClear = run.board.every((v) => !v);
+    if (allClear) gained += 1000;
+    run.lines += L; run.seedsGot += seedsHere;
+    run.maxCombo = Math.max(run.maxCombo, run.combo);
+    run.maxMulti = Math.max(run.maxMulti, L);
+    bump('lines', L); if (seedsHere) bump('seeds', seedsHere);
+    bump('combo', run.combo, true); bump('multi', L, true);
+  } else {
+    run.miss++;
+    if (run.miss >= 3) { run.combo = 0; run.miss = 0; }
+  }
+  run.score += gained;
+  run.trayLines += L;
+  bump('place', 1); bump('score', run.score, true);
+  let refilled = false;
+  if (run.tray.every((x) => !x)) {
+    if (run.mode === 'daily') { run.trayLog.push(run.trayLines); run.trayLines = 0; }
+    if (run.mode !== 'daily' || run.remaining > 0) { dealTray(); refilled = true; }
+  }
+  persist(); saveRun();
+  return { L, lines, cleared, gained, seedsHere, allClear, refilled, combo: run.combo };
+}
+function checkGameOver() {
+  if (!run || run.over) return;
+  const left = [0, 1, 2].filter((i) => run.tray[i]);
+  if (run.mode === 'daily' && left.length === 0 && run.remaining === 0) { endRun('complete'); return; }
+  if (left.length && !left.some((i) => fits(run.tray[i].s))) endRun('stuck');
+}
+function endRun(reason) {
+  run.over = reason;
+  if (run.mode === 'daily' && reason === 'stuck') { run.trayLog.push(run.trayLines); run.trayLines = 0; }
+  bump('score', run.score, true);
+  if (run.mode === 'daily') bump('daily', 1);
+  persist(); saveRun();
+  drag = null; inputLock = true;
+  const t = now();
+  if (reason === 'stuck') {
+    fx.grey = { t0: t + 350 };
+    floatText('もう置けない！', CW / 2, L.by + L.bp / 2, { size: L.cell * 0.85, color: '#fffaf0', dur: 1300, rise: 18 });
+  } else {
+    confetti();
+  }
+  const r = run;
+  setTimeout(() => { if (run === r && run.over) { sfx.over(); showOver(); } }, reason === 'stuck' ? 1400 : 800);
+}
+function rewardsFor(r) {
+  const fromScore = Math.floor(r.score / 150), fromSeeds = r.seedsGot * 2, bonusPct = save.buildings * 3;
+  const base = fromScore + fromSeeds;
+  const bonus = Math.round(base * bonusPct / 100);
+  const dailyBonus = r.mode === 'daily' && save.daily.date === r.date && !save.daily.rewarded ? 20 : 0;
+  return { fromScore, fromSeeds, bonusPct, bonus, dailyBonus, total: base + bonus + dailyBonus };
+}
+function finalizeRun(r) {
+  const rw = rewardsFor(r);
+  save.stars += rw.total;
+  if (r.mode === 'endless') save.best = Math.max(save.best, r.score);
+  else if (save.daily.date === r.date) { save.daily.best = Math.max(save.daily.best, r.score); save.daily.rewarded = true; }
+  save.stats.lines += r.lines; save.stats.seeds += r.seedsGot;
+  persist(); dropRun(r.mode);
+  if (run === r) run = null;
+  return rw;
+}
+
+/* ---------- canvas & rendering ---------- */
+const cv = $('cv'), ctx = cv.getContext('2d'), stage = $('stage');
+let DPR = 1, CW = 0, CH = 0, L = { cell: 40, bx: 0, by: 0, bp: 320, frame: 8, trayTop: 0, trayH: 0, slotW: 0, tc: 20 };
+let PAL = {}, bgCache = null;
+const sprites = new Map();
+let drag = null, ret = null, inputLock = false, rafId = 0, hudScore = 0, hudShown = -1;
+const fx = { clears: [], parts: [], floats: [], flyers: [], land: null, shake: null, grey: null, trayT: 0 };
+function resetFx() { fx.clears = []; fx.parts = []; fx.floats = []; fx.flyers = []; fx.land = null; fx.shake = null; fx.grey = null; drag = null; ret = null; }
+
+function readPalette() {
+  const cs = getComputedStyle(document.documentElement);
+  const g = (n) => cs.getPropertyValue(n).trim();
+  PAL = {
+    blocks: [null, g('--b1'), g('--b2'), g('--b3'), g('--b4'), g('--b5'), g('--b6')],
+    grey: g('--b-grey'), wood: g('--wood'), wood2: g('--wood-2'), cell: g('--wood-cell'), hole: g('--wood-hole'),
+    grain: g('--wood-grain'), shadow: g('--board-shadow'), shelf: g('--shelf'), gold: g('--gold'), paper: g('--paper'), ink: g('--ink'),
+  };
+  sprites.clear(); bgCache = null;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', g('--sky-1'));
+}
+function hexToRgb(h) {
+  h = h.replace('#', '');
+  if (h.length === 3) h = h.split('').map((x) => x + x).join('');
+  const n = parseInt(h.slice(0, 6), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+function shade(h, a) {
+  const [r, g, b] = hexToRgb(h), t = a < 0 ? 0 : 255, p = Math.abs(a);
+  return `rgb(${Math.round(r + (t - r) * p)},${Math.round(g + (t - g) * p)},${Math.round(b + (t - b) * p)})`;
+}
+function rr(c, x, y, w, h, r) {
+  r = Math.max(0, Math.min(r, w / 2, h / 2));
+  c.beginPath(); c.moveTo(x + r, y);
+  c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
+  c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
+}
+function makeSprite(color, size) {
+  const px = Math.ceil(size * DPR);
+  const oc = document.createElement('canvas'); oc.width = oc.height = px;
+  const c = oc.getContext('2d'); c.scale(px / size, px / size);
+  const pad = size * 0.055, w = size - pad * 2, r = size * 0.2;
+  c.fillStyle = shade(color, -0.3); rr(c, pad, pad, w, w, r); c.fill();
+  c.fillStyle = color; rr(c, pad, pad, w, w - size * 0.11, r); c.fill();
+  const g = c.createLinearGradient(0, pad, 0, pad + w * 0.62);
+  g.addColorStop(0, 'rgba(255,255,255,.42)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+  c.fillStyle = g; rr(c, pad + size * 0.08, pad + size * 0.06, w - size * 0.16, w * 0.44, r * 0.7); c.fill();
+  c.fillStyle = 'rgba(255,255,255,.55)';
+  c.beginPath(); c.ellipse(pad + w * 0.25, pad + w * 0.22, size * 0.07, size * 0.045, -0.5, 0, Math.PI * 2); c.fill();
+  return oc;
+}
+function sprite(color) {
+  const k = `${color}|${L.cell}|${DPR}`;
+  let s = sprites.get(k);
+  if (!s) { s = makeSprite(color, L.cell); sprites.set(k, s); }
+  return s;
+}
+function drawSprout(c, x, y, s) {
+  c.save(); c.translate(x, y);
+  c.fillStyle = 'rgba(255,252,240,.94)'; c.beginPath(); c.arc(0, -s * 0.02, s * 0.25, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = '#2e7a45'; c.lineWidth = Math.max(1.2, s * 0.055); c.lineCap = 'round';
+  c.beginPath(); c.moveTo(0, s * 0.13); c.lineTo(0, -s * 0.03); c.stroke();
+  c.fillStyle = '#43a35e';
+  c.beginPath(); c.ellipse(-s * 0.085, -s * 0.07, s * 0.1, s * 0.05, -0.6, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.ellipse(s * 0.085, -s * 0.09, s * 0.11, s * 0.055, 0.6, 0, Math.PI * 2); c.fill();
+  c.restore();
+}
+function resize() {
+  const rect = stage.getBoundingClientRect();
+  if (rect.width < 10 || rect.height < 10) return;
+  DPR = Math.min(3, window.devicePixelRatio || 1);
+  CW = rect.width; CH = rect.height;
+  cv.width = Math.round(CW * DPR); cv.height = Math.round(CH * DPR);
+  layout(); sprites.clear(); bgCache = null;
+}
+function layout() {
+  const top = 34;
+  const trayH = Math.round(clamp(CH * 0.25, 112, 176));
+  const avail = Math.max(120, Math.min(CW, CH - trayH - top - 6));
+  const frame = Math.max(6, Math.round(avail * 0.028));
+  const cell = Math.floor((avail - frame * 2) / N);
+  const bp = cell * N, total = bp + frame * 2;
+  const bx = Math.round((CW - total) / 2) + frame;
+  const by = top + Math.round(Math.max(0, (CH - trayH - top - total) / 2)) + frame;
+  const trayTop = by + bp + frame + 6;
+  const trayHh = Math.max(60, CH - trayTop);
+  const slotW = CW / 3;
+  const tc = Math.max(10, Math.min(cell * 0.6, (slotW - 14) / 5, (trayHh - 18) / 5));
+  L = { cell, bx, by, bp, frame, trayTop, trayH: trayHh, slotW, tc };
+}
+function buildBg() {
+  const c = document.createElement('canvas');
+  c.width = Math.max(1, cv.width); c.height = Math.max(1, cv.height);
+  const g = c.getContext('2d'); g.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const { bx, by, bp, frame, cell } = L;
+  const x = bx - frame, y = by - frame, s = bp + frame * 2, rad = frame * 1.8;
+  g.fillStyle = PAL.shadow; rr(g, x, y + 7, s, s, rad); g.fill();
+  const gr = g.createLinearGradient(0, y, 0, y + s);
+  gr.addColorStop(0, PAL.wood); gr.addColorStop(1, PAL.wood2);
+  g.fillStyle = gr; rr(g, x, y, s, s, rad); g.fill();
+  g.save(); rr(g, x, y, s, s, rad); g.clip();
+  g.strokeStyle = PAL.grain; g.lineWidth = 1.2;
+  for (let i = 0; i < 24; i++) {
+    const yy = y + (i + 0.5) * s / 24;
+    g.beginPath(); g.moveTo(x, yy);
+    for (let xx = 0; xx <= s; xx += s / 16) g.lineTo(x + xx, yy + Math.sin(xx * 0.035 + i * 1.7) * 2.4 + Math.sin(xx * 0.11 + i) * 0.8);
+    g.stroke();
+  }
+  g.restore();
+  g.strokeStyle = 'rgba(255,255,255,.22)'; g.lineWidth = 2; rr(g, x + 1.5, y + 1.5, s - 3, s - 3, rad - 1); g.stroke();
+  g.fillStyle = PAL.cell; rr(g, bx - 3, by - 3, bp + 6, bp + 6, Math.max(4, frame * 0.8)); g.fill();
+  const gap = Math.max(1.5, cell * 0.05);
+  for (let r = 0; r < N; r++) for (let cc = 0; cc < N; cc++) {
+    const hx = bx + cc * cell + gap, hy = by + r * cell + gap, hs = cell - gap * 2;
+    g.fillStyle = PAL.hole; rr(g, hx, hy, hs, hs, cell * 0.16); g.fill();
+    g.fillStyle = PAL.grain; rr(g, hx, hy, hs, hs * 0.24, cell * 0.16); g.fill();
+  }
+  const ty = L.trayTop + 4, th = L.trayH - 10;
+  if (th > 24) { g.fillStyle = PAL.shelf; rr(g, 0, ty, CW, th, 22); g.fill(); }
+  bgCache = c;
+}
+const slotCenter = (i) => ({ x: L.slotW * (i + 0.5), y: L.trayTop + L.trayH / 2 });
+function drawPiece(p, left, top, size, alpha = 1, shadow = false) {
+  const sh = SHAPES[p.s], spr = sprite(PAL.blocks[p.c]);
+  if (shadow) {
+    ctx.globalAlpha = 0.2 * alpha; ctx.fillStyle = '#000';
+    for (const [r, c] of sh.cells) { rr(ctx, left + c * size + size * 0.1, top + r * size + size * 0.3, size * 0.8, size * 0.8, size * 0.2); ctx.fill(); }
+  }
+  ctx.globalAlpha = alpha;
+  sh.cells.forEach(([r, c], i) => {
+    ctx.drawImage(spr, left + c * size, top + r * size, size, size);
+    if (i === p.seed) drawSprout(ctx, left + c * size + size / 2, top + r * size + size / 2, size);
+  });
+  ctx.globalAlpha = 1;
+}
+function dragTarget(d) {
+  const p = run.tray[d.slot], sh = SHAPES[p.s], cs = L.cell;
+  const lift = d.touch ? sh.h * cs / 2 + cs * 1.15 : 0;
+  const cx = d.x, cy = d.y - lift;
+  const left = cx - sh.w * cs / 2, top = cy - sh.h * cs / 2;
+  return { cx, cy, left, top, gc: Math.round((left - L.bx) / cs), gr: Math.round((top - L.by) / cs) };
+}
+function dragGeom(d, t) {
+  const sh = SHAPES[run.tray[d.slot].s], tg = dragTarget(d), sc = slotCenter(d.slot);
+  const k = Math.min(1, (t - d.t0) / 120), e = 1 - Math.pow(1 - k, 3);
+  const cx = sc.x + (tg.cx - sc.x) * e, cy = sc.y + (tg.cy - sc.y) * e, size = L.tc + (L.cell - L.tc) * e;
+  return { cx, cy, size, left: cx - sh.w * size / 2, top: cy - sh.h * size / 2 };
+}
+function updateSnap() {
+  const tg = dragTarget(drag);
+  const p = run.tray[drag.slot];
+  const valid = canPlace(p.s, tg.gr, tg.gc);
+  if (valid !== drag.valid || tg.gr !== drag.gr || tg.gc !== drag.gc) {
+    drag.gr = tg.gr; drag.gc = tg.gc; drag.valid = valid;
+    drag.prev = valid ? lineCells(previewLines(p.s, tg.gr, tg.gc)) : null;
+  }
+}
+
+function draw(t) {
+  if (!run || CW === 0) return;
+  if (!bgCache) buildBg();
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.clearRect(0, 0, CW, CH);
+  let sx = 0, sy = 0;
+  if (fx.shake) {
+    const k = (t - fx.shake.t0) / fx.shake.dur;
+    if (k < 1) { const m = fx.shake.mag * (1 - k); sx = (Math.random() * 2 - 1) * m; sy = (Math.random() * 2 - 1) * m; } else fx.shake = null;
+  }
+  ctx.save(); ctx.translate(sx, sy);
+  ctx.drawImage(bgCache, 0, 0, CW, CH);
+  drawCells(t);
+  drawPreview(t);
+  drawClears(t);
+  ctx.restore();
+  drawTray(t);
+  drawDragged(t);
+  drawParts(t);
+  drawFlyers(t);
+  drawFloats(t);
+  tweenHud();
+}
+function drawCells(t) {
+  const { bx, by, cell } = L;
+  let lk = 1;
+  if (fx.land) { lk = (t - fx.land.t0) / 220; if (lk >= 1) fx.land = null; }
+  const greyK = fx.grey ? (t - fx.grey.t0) / 800 : -1;
+  for (let i = 0; i < N * N; i++) {
+    const v = run.board[i]; if (!v) continue;
+    const r = (i / N) | 0, c = i % N;
+    let x = bx + c * cell, y = by + r * cell, s = cell;
+    if (fx.land && lk < 1 && fx.land.cells.includes(i)) {
+      const ns = s * (1 + 0.14 * Math.sin(Math.PI * lk)); x -= (ns - s) / 2; y -= (ns - s) / 2; s = ns;
+    }
+    const grey = greyK > 0 && (r + c) / (2 * N - 2) < greyK;
+    ctx.drawImage(sprite(grey ? PAL.grey : PAL.blocks[v]), x, y, s, s);
+    if (run.seeds[i]) drawSprout(ctx, x + s / 2, y + s / 2, s);
+  }
+}
+function drawPreview(t) {
+  if (!drag || !drag.valid) return;
+  const p = run.tray[drag.slot], sh = SHAPES[p.s], { bx, by, cell } = L;
+  const spr = sprite(PAL.blocks[p.c]);
+  if (drag.prev && drag.prev.size) {
+    const glow = 0.16 + 0.12 * (0.5 + 0.5 * Math.sin(t / 90));
+    for (const idx of drag.prev) {
+      const r = (idx / N) | 0, c = idx % N, x = bx + c * cell, y = by + r * cell;
+      ctx.drawImage(spr, x, y, cell, cell);
+      if (run.seeds[idx]) drawSprout(ctx, x + cell / 2, y + cell / 2, cell);
+      ctx.fillStyle = `rgba(255,255,255,${glow})`; rr(ctx, x + 2, y + 2, cell - 4, cell - 4, cell * 0.18); ctx.fill();
+    }
+  }
+  ctx.globalAlpha = 0.45;
+  for (const [r, c] of sh.cells) ctx.drawImage(spr, bx + (drag.gc + c) * cell, by + (drag.gr + r) * cell, cell, cell);
+  ctx.globalAlpha = 1;
+}
+function drawClears(t) {
+  const { bx, by, cell } = L;
+  fx.clears = fx.clears.filter((o) => {
+    const k = (t - o.t0) / 260;
+    const x = bx + o.c * cell, y = by + o.r * cell;
+    if (k < 0) { ctx.drawImage(sprite(PAL.blocks[o.color]), x, y, cell, cell); if (o.seed) drawSprout(ctx, x + cell / 2, y + cell / 2, cell); return true; }
+    if (!o.spawned) {
+      o.spawned = true;
+      burst(x + cell / 2, y + cell / 2, PAL.blocks[o.color], REDUCE ? 1 : 4);
+      if (o.seed) {
+        fx.flyers.push({ x0: x + cell / 2, y0: y + cell / 2, t0: t, dur: 760 });
+        floatText('+★2', x + cell / 2, y, { size: cell * 0.42, color: PAL.gold, dur: 800, rise: 34 });
+        sfx.seed();
+      }
+    }
+    if (k >= 1) return false;
+    const s = cell * (1 - k * k);
+    ctx.save(); ctx.translate(x + cell / 2, y + cell / 2); ctx.rotate(k * 0.6);
+    ctx.globalAlpha = 1 - k * 0.5;
+    ctx.drawImage(sprite(PAL.blocks[o.color]), -s / 2, -s / 2, s, s);
+    ctx.globalAlpha = (1 - k) * 0.7; ctx.fillStyle = '#fff'; rr(ctx, -s / 2, -s / 2, s, s, s * 0.2); ctx.fill();
+    ctx.restore(); ctx.globalAlpha = 1;
+    return true;
+  });
+}
+function drawTray(t) {
+  for (let i = 0; i < 3; i++) {
+    const p = run.tray[i];
+    if (!p || (drag && drag.slot === i) || (ret && ret.slot === i)) continue;
+    const sh = SHAPES[p.s], sc = slotCenter(i), size = L.tc;
+    const k = clamp((t - fx.trayT) / 300 - i * 0.15, 0, 1), e = 1 - Math.pow(1 - k, 3);
+    const oy = (1 - e) * 46;
+    const ok = run.over ? true : fits(p.s);
+    drawPiece(p, sc.x - sh.w * size / 2, sc.y - sh.h * size / 2 + oy, size, (ok ? 1 : 0.32) * e);
+  }
+}
+function drawDragged(t) {
+  if (drag) {
+    const g = dragGeom(drag, t);
+    drawPiece(run.tray[drag.slot], g.left, g.top, g.size, 1, true);
+  } else if (ret) {
+    const p = run.tray[ret.slot];
+    if (!p) { ret = null; return; }
+    const k = Math.min(1, (t - ret.t0) / 180), e = 1 - Math.pow(1 - k, 3);
+    const sc = slotCenter(ret.slot), sh = SHAPES[p.s];
+    const cx = ret.x0 + (sc.x - ret.x0) * e, cy = ret.y0 + (sc.y - ret.y0) * e, size = ret.s0 + (L.tc - ret.s0) * e;
+    drawPiece(p, cx - sh.w * size / 2, cy - sh.h * size / 2, size);
+    if (k >= 1) ret = null;
+  }
+}
+function burst(x, y, color, n) {
+  if (fx.parts.length > 420) return;
+  const t = now();
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, sp = 70 + Math.random() * 230;
+    fx.parts.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 170, s: L.cell * (0.13 + Math.random() * 0.16), color, t0: t, life: 550 + Math.random() * 450, rot: Math.random() * 6, vr: (Math.random() * 2 - 1) * 9 });
+  }
+}
+function confetti() {
+  if (REDUCE) return;
+  const t = now();
+  for (let i = 0; i < 70; i++) {
+    fx.parts.push({ x: Math.random() * CW, y: -10, vx: (Math.random() * 2 - 1) * 60, vy: 60 + Math.random() * 160, s: 5 + Math.random() * 6, color: PAL.blocks[1 + (i % 6)], t0: t + Math.random() * 400, life: 1600 + Math.random() * 600, rot: Math.random() * 6, vr: (Math.random() * 2 - 1) * 7, g: 120 });
+  }
+}
+function drawParts(t) {
+  fx.parts = fx.parts.filter((p) => {
+    const age = t - p.t0; if (age < 0) return true;
+    const k = age / p.life; if (k >= 1) return false;
+    const a = age / 1000, g = p.g ?? 900;
+    const x = p.x + p.vx * a, y = p.y + p.vy * a + 0.5 * g * a * a;
+    ctx.save(); ctx.globalAlpha = 1 - k; ctx.translate(x, y); ctx.rotate(p.rot + p.vr * a);
+    ctx.fillStyle = p.color; ctx.fillRect(-p.s / 2, -p.s / 2, p.s, p.s);
+    ctx.restore();
+    return true;
+  });
+  ctx.globalAlpha = 1;
+}
+function drawFlyers(t) {
+  fx.flyers = fx.flyers.filter((f) => {
+    const k = (t - f.t0) / f.dur; if (k >= 1) return false;
+    const e = k * k, x1 = CW - 40, y1 = -24, cx = f.x0, cy = f.y0 - 120;
+    const x = (1 - e) * (1 - e) * f.x0 + 2 * (1 - e) * e * cx + e * e * x1;
+    const y = (1 - e) * (1 - e) * f.y0 + 2 * (1 - e) * e * cy + e * e * y1;
+    drawSprout(ctx, x, y, L.cell * (1 + 0.35 * Math.sin(Math.PI * k)));
+    return true;
+  });
+}
+function floatText(text, x, y, o = {}) {
+  fx.floats.push({ text, x, y, size: o.size || 28, color: o.color || '#fffaf0', dur: o.dur || 900, rise: o.rise ?? 50, t0: now() + (o.delay || 0) });
+}
+function drawFloats(t) {
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+  fx.floats = fx.floats.filter((f) => {
+    const k = (t - f.t0) / f.dur; if (k < 0) return true; if (k >= 1) return false;
+    const sc = k < 0.15 ? 0.6 + (k / 0.15) * 0.55 : 1.15 - Math.min(0.15, (k - 0.15) * 0.5);
+    const size = Math.max(10, f.size * sc), y = f.y - k * f.rise;
+    ctx.globalAlpha = k > 0.72 ? 1 - (k - 0.72) / 0.28 : 1;
+    ctx.font = `${Math.round(size)}px "Dela Gothic One","Hiragino Sans","Noto Sans JP",sans-serif`;
+    ctx.lineWidth = Math.max(3, size * 0.2); ctx.strokeStyle = '#3b2414';
+    const x = clamp(f.x, size * f.text.length * 0.5, CW - size * f.text.length * 0.5);
+    ctx.strokeText(f.text, x, y); ctx.fillStyle = f.color; ctx.fillText(f.text, x, y);
+    return true;
+  });
+  ctx.globalAlpha = 1;
+}
+
+/* ---------- game flow ---------- */
+function doPlace(slot, gr, gc) {
+  const p = run.tray[slot], sh = SHAPES[p.s], t = now();
+  const res = place(slot, gr, gc);
+  fx.land = { cells: sh.cells.map(([r, c]) => (gr + r) * N + gc + c), t0: t };
+  sfx.place(); haptic(8);
+  if (res.L > 0) {
+    const pr = gr + sh.h / 2 - 0.5, pc = gc + sh.w / 2 - 0.5;
+    for (const o of res.cleared) {
+      const r = (o.idx / N) | 0, c = o.idx % N;
+      fx.clears.push({ r, c, color: o.color, seed: o.seed, t0: t + Math.hypot(r - pr, c - pc) * 22, spawned: false });
+    }
+    const cx = L.bx + (pc + 0.5) * L.cell, cy = L.by + (pr + 0.5) * L.cell;
+    floatText(`+${fmt(res.gained)}`, cx, cy, { size: L.cell * 0.62, dur: 900, rise: 46 });
+    const praise = ['', '', 'ナイス！', 'すごい！', '最高！'][Math.min(res.L, 4)];
+    if (praise) floatText(praise, CW / 2, L.by + L.bp * 0.36, { size: L.cell * 0.95, color: PAL.gold, dur: 1100, rise: 30, delay: 80 });
+    if (res.combo >= 2) floatText(`${res.combo} コンボ！`, CW / 2, L.by + L.bp * (praise ? 0.52 : 0.42), { size: L.cell * 0.7, color: '#fffaf0', dur: 1000, rise: 26, delay: praise ? 200 : 60 });
+    if (res.allClear) {
+      floatText('ぜんけし！', CW / 2, L.by + L.bp * 0.62, { size: L.cell * 1.05, color: PAL.gold, dur: 1500, rise: 36, delay: 300 });
+      sfx.allclear(); confetti(); haptic([20, 40, 20, 40, 40]);
+    }
+    sfx.clear(res.L, res.combo);
+    haptic([10, 30, 10]);
+    if (res.L >= 2 && !REDUCE) fx.shake = { t0: t, dur: 280, mag: Math.min(10, 1.5 + res.L * 1.8) };
+  }
+  updateHud(res.L > 0);
+  checkGameOver();
+}
+function startGame(mode, fresh = false) {
+  sfx.unlock();
+  if (fresh && runs[mode]) finalizeRun(runs[mode]);
+  if (!runs[mode]) {
+    runs[mode] = newRun(mode); run = runs[mode];
+    dealTray(); save.stats.games++; persist(); saveRun();
+  } else run = runs[mode];
+  resetFx(); fx.trayT = now();
+  inputLock = false; hudScore = run.score; hudShown = -1;
+  $('overOverlay').hidden = true;
+  show('game');
+  updateHud();
+  if (!save.tutorial) openTutorial();
+  setTimeout(checkGameOver, 60);
+}
+function updateHud(comboChanged = false) {
+  if (!run) return;
+  const daily = run.mode === 'daily';
+  $('hudMode').textContent = daily ? '今日のチャレンジ' : 'フリープレイ';
+  $('hudBest').textContent = fmt(daily ? save.daily.best : save.best);
+  $('hudSub').textContent = daily ? `のこり ${run.remaining + run.tray.filter(Boolean).length} ピース` : `芽 ${run.seedsGot}`;
+  const chip = $('comboChip');
+  if (run.combo >= 2) {
+    chip.hidden = false;
+    $('comboN').textContent = run.combo;
+    [...$('comboPips').children].forEach((el, i) => el.classList.toggle('off', i >= 3 - run.miss));
+    if (comboChanged) pulse(chip, 'bump');
+  } else chip.hidden = true;
+}
+function tweenHud() {
+  hudScore += (run.score - hudScore) * 0.2;
+  if (Math.abs(run.score - hudScore) < 1) hudScore = run.score;
+  const v = Math.round(hudScore);
+  if (v !== hudShown) { hudShown = v; $('hudScore').textContent = fmt(v); }
+}
+function showOver() {
+  const r = run, rw = rewardsFor(r), daily = r.mode === 'daily';
+  $('overKicker').textContent = r.over === 'complete' ? `${DAILY_PIECES}ピース おつかれさま！` : '置ける場所がなくなりました';
+  const prevBest = daily ? (save.daily.date === r.date ? save.daily.best : 0) : save.best;
+  $('overRecord').hidden = !(r.score > prevBest && r.score > 0);
+  $('overStats').textContent = `ライン ${r.lines} ・ 最大コンボ ${r.maxCombo} ・ 芽 ${r.seedsGot}`;
+  $('eScore').textContent = `★${rw.fromScore}`;
+  $('eSeed').textContent = `★${rw.fromSeeds}`;
+  $('eBonusLabel').textContent = `島ボーナス（+${rw.bonusPct}%）`;
+  $('eBonus').textContent = `★${rw.bonus}`;
+  $('eDailyRow').hidden = !rw.dailyBonus;
+  $('eDaily').textContent = `★${rw.dailyBonus}`;
+  $('eTotal').textContent = `★${rw.total}`;
+  $('shareBox').hidden = !daily;
+  if (daily) { $('shareText').textContent = shareText(r); $('copyBtn').textContent = '結果をコピー'; }
+  const canRevive = !daily && !r.revived && r.over === 'stuck';
+  $('reviveBtn').hidden = !canRevive;
+  if (canRevive) {
+    const free = save.freeRevive !== dayKey();
+    $('reviveLabel').textContent = free ? 'おたすけで続ける（今日は無料）' : `おたすけで続ける ★${REVIVE_COST}`;
+    $('reviveBtn').disabled = !free && save.stars < REVIVE_COST;
+  }
+  $('overRetry').textContent = daily ? 'もう一度挑戦' : 'もう一回';
+  $('overOverlay').hidden = false;
+  countUp($('overScore'), r.score);
+  if (!$('overRecord').hidden) confetti();
+}
+function countUp(el, target) {
+  if (REDUCE) { el.textContent = fmt(target); return; }
+  const t0 = now(), dur = 700;
+  const step = () => {
+    const k = Math.min(1, (now() - t0) / dur);
+    el.textContent = fmt(target * (1 - Math.pow(1 - k, 3)));
+    if (k < 1) requestAnimationFrame(step);
+  };
+  step();
+}
+function shareText(r) {
+  const [, m, d] = r.date.split('-').map(Number);
+  const marks = ['⬜', '🟩', '🟨', '🟧', '🟥'];
+  const row = [];
+  for (let i = 0; i < DAILY_PIECES / 3; i++) { const v = r.trayLog[i]; row.push(v === undefined ? '⬛' : marks[Math.min(4, v)]); }
+  return `ハコニワブロック 今日のチャレンジ ${m}/${d}\nスコア ${fmt(r.score)} ／ 最大コンボ ${r.maxCombo} ／ 芽 ${r.seedsGot}\n${row.join('')}`;
+}
+function revive() {
+  const free = save.freeRevive !== dayKey();
+  if (!free) { if (save.stars < REVIVE_COST) return; save.stars -= REVIVE_COST; } else save.freeRevive = dayKey();
+  run.revived = true; run.over = null; fx.grey = null;
+  const rows = [], cols = [];
+  for (let i = 0; i < N; i++) {
+    let rn = 0, cn = 0;
+    for (let j = 0; j < N; j++) { if (run.board[i * N + j]) rn++; if (run.board[j * N + i]) cn++; }
+    rows.push({ i, n: rn }); cols.push({ i, n: cn });
+  }
+  rows.sort((a, b) => b.n - a.n); cols.sort((a, b) => b.n - a.n);
+  const cells = lineCells({ rows: rows.slice(0, 2).map((x) => x.i), cols: cols.slice(0, 2).map((x) => x.i) });
+  const t = now();
+  for (const idx of cells) {
+    if (!run.board[idx]) continue;
+    const r = (idx / N) | 0, c = idx % N;
+    fx.clears.push({ r, c, color: run.board[idx], seed: 0, t0: t + Math.hypot(r - 3.5, c - 3.5) * 30, spawned: false });
+    run.board[idx] = 0; run.seeds[idx] = 0;
+  }
+  run.combo = 0; run.miss = 0;
+  dealTray(true);
+  persist(); saveRun();
+  $('overOverlay').hidden = true;
+  inputLock = false;
+  sfx.allclear(); haptic([15, 30, 15]);
+  updateHud();
+  checkGameOver();
+}
+function leaveRunToHome() {
+  if (run && run.over) {
+    const rw = finalizeRun(run);
+    toast(`★+${rw.total} を受け取りました`);
+  } else saveRun();
+  run = null;
+  $('overOverlay').hidden = true;
+  show('home');
+  pulse($('starsChip'));
+}
+
+/* ---------- input ---------- */
+function pointerPos(e) { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+function hitSlot(x, y) {
+  if (y < L.trayTop - L.cell * 0.4) return -1;
+  const s = clamp(Math.floor(x / L.slotW), 0, 2);
+  return run.tray[s] ? s : -1;
+}
+cv.addEventListener('pointerdown', (e) => {
+  sfx.unlock();
+  if (!run || inputLock || run.over || drag || !$('tutorial').hidden) return;
+  const { x, y } = pointerPos(e), slot = hitSlot(x, y);
+  if (slot < 0) return;
+  e.preventDefault();
+  ret = null;
+  drag = { slot, id: e.pointerId, x, y, touch: e.pointerType !== 'mouse', t0: now(), gr: -99, gc: -99, valid: false, prev: null };
+  try { cv.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+  updateSnap(); sfx.pick(); haptic(5);
+});
+cv.addEventListener('pointermove', (e) => {
+  if (!drag || e.pointerId !== drag.id) return;
+  const p = pointerPos(e); drag.x = p.x; drag.y = p.y; updateSnap();
+});
+function endDrag(e) {
+  if (!drag || e.pointerId !== drag.id) return;
+  const d = drag; drag = null;
+  if (d.valid && e.type === 'pointerup') { doPlace(d.slot, d.gr, d.gc); return; }
+  const g = dragGeom(d, now());
+  ret = { slot: d.slot, x0: g.cx, y0: g.cy, s0: g.size, t0: now() };
+  if (e.type === 'pointerup' && g.cy < L.trayTop) sfx.bad();
+}
+cv.addEventListener('pointerup', endDrag);
+cv.addEventListener('pointercancel', endDrag);
+cv.addEventListener('contextmenu', (e) => e.preventDefault());
+
+/* ---------- screens ---------- */
+function loop(t) { rafId = requestAnimationFrame(loop); draw(t); }
+function show(screen) {
+  $('home').hidden = screen !== 'home';
+  $('game').hidden = screen !== 'game';
+  if (screen === 'game') {
+    resize();
+    if (!rafId) rafId = requestAnimationFrame(loop);
+  } else {
+    cancelAnimationFrame(rafId); rafId = 0;
+    renderHome();
+  }
+}
+function openTutorial() { $('tutorial').hidden = false; $('tutOk').focus({ preventScroll: true }); }
+
+/* ---------- home ---------- */
+const ICON_ON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>';
+const ICON_OFF = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>';
+function renderSound() {
+  $('soundBtn').innerHTML = save.sound ? ICON_ON : ICON_OFF;
+  $('soundBtn').setAttribute('aria-pressed', String(save.sound));
+}
+function renderIsland(popIdx = -1) {
+  const host = $('islandItems'); host.textContent = '';
+  BUILDINGS.forEach((b, i) => {
+    if (i >= save.buildings) return;
+    const el = document.createElement('span');
+    el.className = 'item' + (i === popIdx ? ' pop' : b.hop ? ' hop' : '');
+    el.textContent = b.e;
+    el.style.left = b.x + '%'; el.style.top = b.y + '%';
+    el.style.setProperty('--s', b.s); el.style.zIndex = String(b.y);
+    if (b.hop) el.style.animationDelay = `${(i * 0.7) % 3}s`;
+    el.title = b.n;
+    host.appendChild(el);
+  });
+  if (save.buildings < BUILDINGS.length) {
+    const b = BUILDINGS[save.buildings], el = document.createElement('span');
+    el.className = 'item next'; el.textContent = '？';
+    el.style.left = b.x + '%'; el.style.top = b.y + '%'; el.style.zIndex = String(b.y);
+    host.appendChild(el);
+  }
+}
+function renderHome(popIdx = -1) {
+  $('homeStars').textContent = fmt(save.stars);
+  const st = save.login.streak;
+  $('streakDays').textContent = st;
+  $('streakPips').innerHTML = Array.from({ length: 7 }, (_, i) => `<i class="${i < Math.min(st, 7) ? 'on' : ''}"></i>`).join('');
+  $('streakNote').textContent = `明日のボーナス ★${5 * Math.min(st + 1, 7)}`;
+
+  renderIsland(popIdx);
+  const b = save.buildings;
+  $('islandLv').textContent = b; $('islandMax').textContent = BUILDINGS.length;
+  $('islandBonus').textContent = `+${b * 3}%`;
+  if (b < BUILDINGS.length) {
+    const nx = BUILDINGS[b];
+    $('nextEmoji').textContent = nx.e;
+    $('nextName').textContent = `つぎ：${nx.n}`;
+    $('nextBar').style.width = `${Math.min(100, (save.stars / nx.cost) * 100)}%`;
+    $('nextCost').textContent = `★ ${fmt(Math.min(save.stars, nx.cost))} / ${fmt(nx.cost)}`;
+    $('buildBtn').hidden = false;
+    $('buildBtn').disabled = save.stars < nx.cost;
+  } else {
+    $('nextEmoji').textContent = '🎉';
+    $('nextName').textContent = '島が完成しました';
+    $('nextBar').style.width = '100%';
+    $('nextCost').textContent = 'すべての建物がそろいました';
+    $('buildBtn').hidden = true;
+  }
+
+  const er = runs.endless;
+  if (er && !er.over) {
+    $('playLabel').textContent = 'つづきから';
+    $('playSub').textContent = `スコア ${fmt(er.score)} ・ ベスト ${fmt(save.best)}`;
+  } else {
+    $('playLabel').textContent = 'あそぶ';
+    $('playSub').textContent = save.best > 0 ? `ベスト ${fmt(save.best)} ・ 時間制限なし` : '時間制限なし。のんびりどうぞ';
+  }
+  const dr = runs.daily, today = new Date();
+  $('dailyDate').innerHTML = `${today.getMonth() + 1}/${today.getDate()}`;
+  if (dr && !dr.over && dr.date === dayKey()) {
+    $('dailySub').textContent = `つづきから ・ のこり ${dr.remaining + dr.tray.filter(Boolean).length} ピース`;
+  } else if (save.daily.best > 0) {
+    $('dailySub').textContent = `今日のベスト ${fmt(save.daily.best)}\n何回でも挑戦できます`;
+  } else {
+    $('dailySub').textContent = `全員おなじ${DAILY_PIECES}ピースでスコア勝負\n今日の初回プレイで ★+20`;
+  }
+  renderMissions();
+}
+function renderMissions() {
+  const list = $('missionList');
+  list.innerHTML = save.missions.items.map((m, i) => {
+    const pct = Math.min(100, (m.prog / m.target) * 100);
+    const done = m.prog >= m.target;
+    const btn = m.claimed
+      ? `<button class="btn btn-claim done" type="button" disabled>受け取り済み</button>`
+      : done
+        ? `<button class="btn btn-claim ready" type="button" data-i="${i}">★${m.reward} 受け取る</button>`
+        : `<button class="btn btn-claim" type="button" disabled>★${m.reward}</button>`;
+    return `<li class="mission"><div class="m-main"><div class="m-label">${missionLabel(m)}</div><div class="bar"><i style="width:${pct}%"></i></div><div class="m-prog">${fmt(Math.min(m.prog, m.target))} / ${fmt(m.target)}</div></div>${btn}</li>`;
+  }).join('');
+  renderMissionTimer();
+}
+function renderMissionTimer() {
+  const n = new Date(), mid = new Date(n); mid.setHours(24, 0, 0, 0);
+  const mins = Math.max(0, Math.ceil((mid - n) / 60000));
+  $('missionTimer').textContent = `あと${Math.floor(mins / 60)}時間${mins % 60}分で入れかわり`;
+}
+
+/* ---------- wiring ---------- */
+$('playBtn').addEventListener('click', () => startGame('endless'));
+$('dailyBtn').addEventListener('click', () => startGame('daily'));
+$('howBtn').addEventListener('click', openTutorial);
+$('tutOk').addEventListener('click', () => { $('tutorial').hidden = true; save.tutorial = true; persist(); sfx.unlock(); });
+$('soundBtn').addEventListener('click', () => { save.sound = !save.sound; persist(); renderSound(); if (save.sound) sfx.pick(); });
+$('backBtn').addEventListener('click', leaveRunToHome);
+$('overHome').addEventListener('click', leaveRunToHome);
+$('overRetry').addEventListener('click', () => {
+  const mode = run.mode, rw = finalizeRun(run);
+  toast(`★+${rw.total} を受け取りました`);
+  startGame(mode, true);
+});
+$('reviveBtn').addEventListener('click', revive);
+$('copyBtn').addEventListener('click', () => {
+  const text = $('shareText').textContent, btn = $('copyBtn');
+  const fallback = () => {
+    const range = document.createRange(); range.selectNodeContents($('shareText'));
+    const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+    btn.textContent = '選択しました。長押しでコピーできます';
+  };
+  try {
+    navigator.clipboard.writeText(text).then(() => { btn.textContent = 'コピーしました'; }, fallback);
+  } catch (e) { fallback(); }
+});
+$('buildBtn').addEventListener('click', () => {
+  const b = save.buildings; if (b >= BUILDINGS.length) return;
+  const nx = BUILDINGS[b]; if (save.stars < nx.cost) return;
+  save.stars -= nx.cost; save.buildings++; persist();
+  sfx.unlock(); sfx.build(); haptic([10, 30, 10]);
+  renderHome(b);
+  pulse($('starsChip'));
+  toast(`「${nx.n}」が建ちました ・ ★ボーナス +${save.buildings * 3}%`);
+});
+$('missionList').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-i]'); if (!btn) return;
+  const m = save.missions.items[Number(btn.dataset.i)];
+  if (!m || m.claimed || m.prog < m.target) return;
+  m.claimed = true; save.stars += m.reward;
+  let msg = `★+${m.reward} を受け取りました`;
+  if (!save.missions.bonus && save.missions.items.every((x) => x.claimed)) {
+    save.missions.bonus = true; save.stars += 30; msg = `ミッションコンプリート！ ★+${m.reward + 30}`;
+  }
+  persist(); sfx.unlock(); sfx.coin(); haptic(10);
+  renderHome(); pulse($('starsChip')); toast(msg);
+});
+document.addEventListener('pointerdown', () => sfx.unlock(), { once: true });
+window.addEventListener('resize', () => { if (!$('game').hidden) resize(); });
+if ('ResizeObserver' in window) new ResizeObserver(() => { if (!$('game').hidden) resize(); }).observe(stage);
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', readPalette);
+new MutationObserver(readPalette).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { saveRun(); persist(); return; }
+  if (save.login.last !== dayKey()) {
+    const msg = dailyRollover();
+    if (msg) toast(msg);
+    if (!$('home').hidden) renderHome();
+  }
+});
+window.addEventListener('pagehide', () => { saveRun(); persist(); });
+if (document.fonts && document.fonts.load) document.fonts.load('20px "Dela Gothic One"').catch(() => {});
+
+function boot() {
+  readPalette();
+  const msg = dailyRollover();
+  let earned = 0;
+  for (const m of ['endless', 'daily']) {
+    const r = loadRun(m);
+    if (!r) continue;
+    runs[m] = r;
+    if (r.over || (m === 'daily' && r.date !== dayKey())) earned += finalizeRun(r).total;
+  }
+  renderSound();
+  show('home');
+  if (msg) toast(msg);
+  if (earned) toast(`前回のゲームの ★+${earned} を受け取りました`);
+  setInterval(() => { if (!$('home').hidden) renderMissionTimer(); }, 30000);
+}
+boot();
+</script>
+</body>
+</html>
