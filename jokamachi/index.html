@@ -1,0 +1,1634 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>城下町普請帖</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="江戸時代、川沿いの荒れ地に城下町を築く。道を引き、荷を運ばせ、人を働かせる街づくりシミュレーション">
+<meta name="theme-color" content="#efe6d2">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="普請帖">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@600;800&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap">
+<style>
+:root{
+  /* Layout: an Edo-period town map (城下絵図) fills the screen; a slim almanac bar sits on top and an order bar
+     (道・建てる・撤去・帳簿) docks at the bottom. One paper-and-ink world by design. */
+  color-scheme:light;
+  --paper:#efe6d2; --paper-2:#e4d7ba; --paper-3:#f8f2e4; --ink:#2b2622; --ink-soft:#6c6257; --line:#cbbb98;
+  --shu:#b23c2a; --shu-deep:#842a1c; --ai:#2f4f6f; --matcha:#58733a; --gold:#a97c22;
+  --font-display:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;
+  --font-body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+}
+html{box-sizing:border-box;height:100%;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);background:var(--paper);overscroll-behavior:none}
+*,*::before,*::after{box-sizing:inherit}
+[hidden]{display:none!important}
+body{height:100%;margin:0;overflow:hidden;background:var(--paper);color:var(--ink);font-family:var(--font-body);font-size:14px;line-height:1.5;
+  -webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;overscroll-behavior:none;-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit}
+h1,h2,h3,p{margin:0}
+.gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+.btn{border:1px solid var(--line);border-radius:12px;padding:10px 14px;cursor:pointer;touch-action:manipulation;font-weight:900;font-size:14px;line-height:1.3;
+  background:var(--paper-3);color:var(--ink);box-shadow:0 3px 0 #cdbd99;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;text-align:center}
+.btn:active:not([disabled]){transform:translateY(2px);box-shadow:0 1px 0 #cdbd99}
+.btn[disabled]{opacity:.45;cursor:default}
+.btn small{font-size:11px;font-weight:700;opacity:.8}
+.btn-shu{background:var(--shu);border-color:var(--shu-deep);color:#fbf4e6;box-shadow:0 3px 0 var(--shu-deep)}
+.btn-shu:active:not([disabled]){box-shadow:0 1px 0 var(--shu-deep)}
+.btn-ai{background:var(--ai);border-color:#1f3650;color:#f3eee2;box-shadow:0 3px 0 #1f3650}
+.btn:focus-visible,.tool:focus-visible,.seg button:focus-visible,.card:focus-visible{outline:3px solid var(--ai);outline-offset:2px}
+
+/* title */
+#title{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;text-align:center;padding-block:24px;
+  background:radial-gradient(ellipse at 50% 40%,#f7f0e0 0%,var(--paper) 60%,#e2d4b4 100%)}
+.t-seal{width:62px;height:62px;border:3px solid var(--shu);border-radius:8px;color:var(--shu);display:grid;place-items:center;font-family:var(--font-display);font-weight:800;font-size:20px;line-height:1.05;transform:rotate(-4deg);padding:4px}
+.t-name{font-family:var(--font-display);font-weight:800;font-size:44px;letter-spacing:.12em;line-height:1.15;writing-mode:horizontal-tb}
+.t-sub{font-family:var(--font-display);font-weight:600;color:var(--ink-soft);font-size:14px;line-height:2}
+.t-actions{display:flex;flex-direction:column;gap:12px;width:100%;max-width:300px}
+.t-actions .btn{padding:14px;font-size:16px}
+.t-note{font-size:12px;color:var(--ink-soft)}
+
+/* game frame */
+#game{height:100%;display:flex;flex-direction:column}
+.top{background:linear-gradient(180deg,#f6efde,#ece2c9);border-bottom:1px solid var(--line);padding-block:6px 6px;display:flex;flex-direction:column;gap:6px;z-index:2}
+.top-row{display:flex;align-items:center;gap:8px}
+.date{display:flex;flex-direction:column;line-height:1.15;min-width:0;flex:1}
+.date b{font-family:var(--font-display);font-weight:800;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.date span{font-size:11.5px;color:var(--ink-soft);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:360px){.date b{font-size:14px}.stat{min-width:38px;padding:3px 4px}.stat b{font-size:12.5px}}
+.stats{display:flex;gap:5px;margin-left:auto}
+.stat{display:flex;flex-direction:column;align-items:center;line-height:1.1;background:var(--paper-3);border:1px solid var(--line);border-radius:10px;padding:3px 6px;min-width:42px}
+.stat i{font-style:normal;font-size:10px;color:var(--ink-soft);font-weight:700}
+.stat b{font-size:13.5px;font-variant-numeric:tabular-nums;font-weight:900}
+.stat b.bad{color:var(--shu)}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--paper-3)}
+.seg button{border:0;background:none;padding:7px 6px;font-size:11px;font-weight:900;cursor:pointer;min-width:28px;touch-action:manipulation;letter-spacing:-.1em}
+.seg button.on{background:var(--ink);color:var(--paper-3)}
+.goal{flex:1;min-width:0;display:flex;align-items:center;gap:8px;background:var(--paper-3);border:1px solid var(--line);border-left:4px solid var(--shu);border-radius:10px;padding:5px 10px;cursor:pointer;text-align:left;width:100%}
+.goal .g-ch{font-family:var(--font-display);font-weight:800;font-size:12.5px;white-space:nowrap}
+.goal .g-t{font-size:12.5px;font-weight:700;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.goal .g-n{font-size:12px;font-weight:900;color:var(--shu);white-space:nowrap}
+.stage{flex:1;min-height:0;position:relative;touch-action:none;background:#d8cba9;overflow:hidden}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.placebar{position:absolute;left:0;right:0;bottom:0;z-index:3;padding-block:8px;background:rgba(248,242,228,.96);border-top:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.placebar .pb-t{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.35}
+.placebar .pb-t b{font-size:14px}
+.placebar .pb-t span{font-size:12px;color:var(--ink-soft);font-weight:700}
+.placebar .pb-t span.bad{color:var(--shu)}
+.placebar .btn{padding:9px 14px}
+.tools{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding-block:6px 6px;background:linear-gradient(180deg,#ece2c9,#e6d9bc);border-top:1px solid var(--line);z-index:2}
+.tool{border:1px solid var(--line);background:var(--paper-3);border-radius:12px;padding:5px 2px 4px;display:flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer;touch-action:manipulation;font-weight:900;font-size:11.5px}
+.tool svg{width:22px;height:22px;fill:none;stroke:var(--ink);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.tool.on{background:var(--ink);color:var(--paper-3);border-color:var(--ink)}
+.tool.on svg{stroke:var(--paper-3)}
+.toast{position:absolute;left:50%;top:10px;transform:translate(-50%,-140%);z-index:6;background:var(--ink);color:var(--paper-3);font-weight:700;font-size:12.5px;padding:8px 14px;border-radius:99px;
+  width:max-content;max-width:calc(100% - 32px);text-align:center;transition:transform .35s cubic-bezier(.2,1.3,.4,1),opacity .2s;pointer-events:none;opacity:0}
+.toast.show{transform:translate(-50%,0);opacity:1}
+
+/* sheets */
+.sheet-wrap{position:fixed;inset:0;z-index:20;display:flex;align-items:flex-end;justify-content:center;background:rgba(43,38,34,.22);
+  padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(10px,env(safe-area-inset-right,0px));padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));padding-top:calc(40px + env(safe-area-inset-top,0px))}
+.sheet{width:100%;max-width:480px;max-height:100%;overflow-y:auto;background:var(--paper-3);border:1px solid var(--line);border-radius:18px;padding:16px 16px 14px;
+  display:flex;flex-direction:column;gap:12px;box-shadow:0 -8px 30px rgba(43,38,34,.2);animation:rise .28s cubic-bezier(.2,1.2,.4,1) both;
+  background-image:repeating-linear-gradient(0deg,rgba(150,120,70,.035) 0 1px,transparent 1px 4px)}
+.sheet.short{max-height:62%}
+.sh-head{display:flex;align-items:center;gap:12px}
+.sh-icon{width:42px;height:42px;flex:none;border-radius:8px;display:grid;place-items:center;font-family:var(--font-display);font-weight:800;font-size:20px;color:#fbf4e6;border:1px solid rgba(0,0,0,.25)}
+.sh-title{font-family:var(--font-display);font-weight:800;font-size:21px;line-height:1.25}
+.sh-kick{font-size:11.5px;font-weight:900;color:var(--shu);letter-spacing:.06em}
+.sh-x{margin-left:auto;width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--paper);cursor:pointer;font-size:18px;line-height:1;flex:none}
+.status{font-size:13px;font-weight:700;padding:6px 10px;border-radius:10px;background:#e8efd9;color:#3e5523}
+.status.warn{background:#f6e0d6;color:var(--shu-deep)}
+.desc{font-size:13px;color:var(--ink-soft);line-height:1.6}
+.rows{display:flex;flex-direction:column;gap:5px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:9px 11px}
+.rows>div{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px}
+.rows span{color:var(--ink-soft);font-weight:700}
+.rows b{font-variant-numeric:tabular-nums;text-align:right}
+.rows .sub{font-size:11.5px;color:var(--ink-soft);font-weight:700}
+.bar{height:7px;border-radius:99px;background:#e1d5b8;overflow:hidden;flex:1;min-width:60px}
+.bar i{display:block;height:100%;background:var(--matcha);border-radius:inherit}
+.prow{display:flex;align-items:center;gap:8px;font-size:12.5px}
+.prow span{min-width:44px;font-weight:700}
+.prow b{min-width:64px;text-align:right;font-variant-numeric:tabular-nums}
+.sec{font-family:var(--font-display);font-weight:800;font-size:14px;margin-top:2px}
+.segrow{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700}
+.segrow .seg button{padding:7px 10px;font-size:12.5px}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.acts .btn{flex:1;min-width:120px}
+.cats{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.cats button{flex:none;border:1px solid var(--line);background:var(--paper);border-radius:99px;padding:6px 12px;font-weight:900;font-size:12.5px;cursor:pointer}
+.cats button.on{background:var(--ink);color:var(--paper-3);border-color:var(--ink)}
+.cards{display:flex;flex-direction:column;gap:7px}
+.card{display:flex;gap:10px;align-items:center;border:1px solid var(--line);background:var(--paper);border-radius:12px;padding:8px 10px;cursor:pointer;text-align:left;width:100%}
+.card .c-main{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.35}
+.card .c-main b{font-size:14px}
+.card .c-main span{font-size:11.5px;color:var(--ink-soft)}
+.card .c-cost{font-size:11.5px;font-weight:900;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.card.locked{opacity:.5}
+.trade{display:flex;flex-direction:column;gap:6px}
+.trow{display:grid;grid-template-columns:46px 1fr auto;align-items:center;gap:8px;font-size:12.5px;font-weight:700}
+.trow .seg button{padding:6px 8px;font-size:12px}
+.step{display:flex;align-items:center;gap:4px}
+.step button{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--paper-3);font-weight:900;cursor:pointer}
+.step b{min-width:34px;text-align:center;font-variant-numeric:tabular-nums}
+.talk{display:flex;gap:12px;align-items:flex-start}
+.face{width:52px;height:52px;flex:none;border-radius:50%;display:grid;place-items:center;font-family:var(--font-display);font-weight:800;font-size:24px;border:2px solid var(--ink);background:var(--paper)}
+.talk .who{font-size:12px;font-weight:900;color:var(--ink-soft)}
+.talk p{font-family:var(--font-display);font-weight:600;font-size:15.5px;line-height:1.8}
+.goals{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+.goals li{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;font-weight:700;line-height:1.45}
+.goals li i{font-style:normal;width:20px;height:20px;flex:none;border-radius:50%;border:1.5px solid var(--ink-soft);display:grid;place-items:center;font-size:12px;margin-top:1px}
+.goals li.ok{color:var(--ink-soft)}
+.goals li.ok i{background:var(--matcha);border-color:var(--matcha);color:#fff}
+.note{font-size:12.5px;color:var(--ink-soft);background:var(--paper);border:1px dashed var(--line);border-radius:10px;padding:8px 10px;line-height:1.6}
+
+@keyframes rise{0%{transform:translateY(30px);opacity:0}100%{transform:none;opacity:1}}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<section id="title" class="gut" aria-label="タイトル">
+  <div class="t-seal" aria-hidden="true">普請<br>之帖</div>
+  <h1 class="t-name">城下町普請帖</h1>
+  <p class="t-sub">戦の世が終わり、殿は川のほとりに城を築くと決めた。<br>普請奉行となって、荒れ地に城下町を開け。</p>
+  <div class="t-actions">
+    <button class="btn btn-shu" id="contBtn" type="button" hidden></button>
+    <button class="btn" id="newBtn" type="button">新しく始める</button>
+  </div>
+  <p class="t-note">道を引き、荷を運ばせ、人を働かせる街づくり</p>
+</section>
+
+<section id="game" aria-label="城下町" hidden>
+  <header class="top gut">
+    <div class="top-row">
+      <div class="date"><b id="dDate"></b><span id="dTime"></span></div>
+      <div class="stats">
+        <div class="stat"><i>両</i><b id="sMoney">0</b></div>
+        <div class="stat"><i>人</i><b id="sPop">0</b></div>
+        <div class="stat"><i>満足</i><b id="sHappy">0</b></div>
+        <div class="stat"><i>食</i><b id="sFood">0</b></div>
+      </div>
+    </div>
+    <div class="top-row">
+      <button class="goal" id="goalBtn" type="button"><span class="g-ch" id="gCh"></span><span class="g-t" id="gT"></span><span class="g-n" id="gN"></span></button>
+      <div class="seg" id="speed" role="group" aria-label="時の速さ">
+        <button type="button" data-s="0" aria-label="止める">❚❚</button><button type="button" data-s="1" aria-label="ふつう">▶</button><button type="button" data-s="3" aria-label="はやい">▶▶</button><button type="button" data-s="6" aria-label="とてもはやい">▶▶▶</button>
+      </div>
+    </div>
+  </header>
+  <div class="stage" id="stage">
+    <canvas id="cv" aria-label="城下の地図"></canvas>
+    <div class="placebar gut" id="placebar" hidden>
+      <div class="pb-t"><b id="pbT"></b><span id="pbS"></span></div>
+      <button class="btn btn-shu" id="pbOk" type="button">決定</button>
+      <button class="btn" id="pbNo" type="button">やめる</button>
+    </div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </div>
+  <nav class="tools gut" aria-label="指示">
+    <button class="tool" id="tRoad" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3L5 21M16 3l3 18M12 4v3M12 10v4M12 17v3"/></svg>道</button>
+    <button class="tool" id="tBuild" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11L12 4l9 7M5 10v10h14V10M10 20v-6h4v6"/></svg>建てる</button>
+    <button class="tool" id="tRemove" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg>撤去</button>
+    <button class="tool" id="tBook" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3zM5 17a3 3 0 013-3h11M9 8h6"/></svg>帳簿</button>
+    <button class="tool" id="tMenu" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>その他</button>
+  </nav>
+</section>
+
+<div class="sheet-wrap" id="sheetWrap" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+
+<script>
+'use strict';
+document.documentElement.lang = 'ja';
+const $ = (id) => document.getElementById(id);
+
+/* ======================= constants & data ======================= */
+const W = 32, H = 32, N = W * H, TS = 28;
+const HOUR_SEC = 2.5, WALK = 8, CARRY = 6, BUILD_RATE = 1.2, OUT_CAP = 24, IN_TARGET = 12, EAT = 0.4;
+const GATE = 20 * W + 0;
+const CASTLE = { x: 16, y: 9, w: 4, h: 4 };
+const SAVE_KEY = 'jokamachi:save:v1', SET_KEY = 'jokamachi:settings:v1';
+const SEASONS = ['春', '夏', '秋', '冬'];
+const KOKU = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = (n) => Math.floor(n + 1e-9).toLocaleString('ja-JP');
+const g0 = (o, k) => o[k] || 0;
+const addTo = (o, k, v) => { o[k] = (o[k] || 0) + v; };
+const idx = (x, y) => y * W + x;
+const inb = (x, y) => x >= 0 && y >= 0 && x < W && y < H;
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } },
+};
+
+const GOODS = {
+  log: { name: '原木', col: '#7a5230' }, wood: { name: '材木', col: '#c9965c' }, stone: { name: '石', col: '#8d8b86' },
+  rice: { name: '米', col: '#f2ead2' }, fish: { name: '魚', col: '#5f8fb3' }, clay: { name: '粘土', col: '#b36b3a' },
+  tile: { name: '瓦', col: '#4c5563' }, sake: { name: '酒', col: '#d8b75a' },
+};
+const GK = Object.keys(GOODS);
+const PRICE = { log: 2, wood: 4, stone: 3, rice: 3, fish: 3, clay: 2, tile: 8, sake: 10 };
+const ROOF = {
+  kaya: ['#c4a565', '#8c7341'], ita: ['#9a7552', '#694e35'], kawara: ['#5f6877', '#434a56'], kura: ['#f3eee2', '#3f4651'],
+  kiln: ['#7d6b5b', '#4f4339'], shrine: ['#b23c2a', '#7e2a1e'], temple: ['#565e6b', '#3a404a'], market: ['#d9c9a3', '#b23c2a'],
+  field: ['#a9c47a', '#7f9a55'], yard: ['#cdb790', '#8f7a58'],
+};
+const DEF = {
+  house: { name: '長屋', ic: '長', w: 2, h: 2, cost: { wood: 8 }, money: 10, work: 20, res: 8, roof: 'kaya', cat: '住まい', unlock: 0,
+    desc: '8人が住める。市（9マス）か蔵（6マス）の近くでないと食べ物が届かない。' },
+  machiya: { name: '町家', ic: '町', w: 2, h: 2, cost: { wood: 10, tile: 8 }, money: 40, work: 36, res: 14, roof: 'kawara', cat: '住まい', unlock: 4, taxMul: 1.4,
+    desc: '瓦屋根の町家。14人が住め、年貢も多く納める。' },
+  warehouse: { name: '蔵', ic: '蔵', w: 2, h: 2, cost: { wood: 12, stone: 6 }, money: 20, work: 30, jobs: 4, role: 'porter', roof: 'kura', cat: '物流', unlock: 0, feedR: 6,
+    desc: '品物をたくわえる。ここで働く人足が荷を運ぶ。まわり6マスの長屋に米や魚を配る。' },
+  office: { name: '普請小屋', ic: '普', w: 2, h: 2, cost: { wood: 10 }, money: 20, work: 24, jobs: 3, role: 'builder', roof: 'ita', cat: '物流', unlock: 0,
+    desc: '大工が詰める小屋。材料が届いた普請場へ出向いて組み上げる。' },
+  woodcutter: { name: '木こり小屋', ic: '木', w: 1, h: 1, cost: { wood: 4 }, money: 5, work: 10, jobs: 2, out: { log: 1 }, rate: 0.4, roof: 'ita', cat: '生産', unlock: 0, need: 'forest',
+    desc: 'まわり3マスの森から原木を切り出す。森が多いほどはかどる。' },
+  sawmill: { name: '製材所', ic: '製', w: 2, h: 2, cost: { wood: 8, stone: 4 }, money: 20, work: 26, jobs: 3, in: { log: 1 }, out: { wood: 1 }, rate: 0.3, roof: 'ita', cat: '加工', unlock: 0,
+    desc: '原木を材木にひく。材木はほとんどの普請に使う。' },
+  paddy: { name: '田んぼ', ic: '田', w: 3, h: 3, cost: { wood: 2 }, money: 10, work: 14, jobs: 4, out: { rice: 1 }, rate: 0.2, roof: 'field', cat: '生産', unlock: 0, need: 'water3', season: [0.7, 1, 1.5, 0],
+    desc: '川や池から3マス以内に作る。秋によく実り、冬は休む。冬に備えて米をたくわえよう。' },
+  fishery: { name: '漁師小屋', ic: '漁', w: 1, h: 1, cost: { wood: 4 }, money: 8, work: 10, jobs: 2, out: { fish: 1 }, rate: 0.3, roof: 'ita', cat: '生産', unlock: 1, need: 'water1', season: [1, 1, 1, 0.6],
+    desc: '水辺に建てる。一年中、魚がとれる（冬は少なめ）。' },
+  quarry: { name: '石切り場', ic: '石', w: 2, h: 2, cost: { wood: 6 }, money: 15, work: 20, jobs: 3, out: { stone: 1 }, rate: 0.22, roof: 'yard', cat: '生産', unlock: 1, need: 'rock',
+    desc: '岩場に接して建てる。石を切り出す。' },
+  market: { name: '市', ic: '市', w: 2, h: 2, cost: { wood: 8 }, money: 20, work: 20, jobs: 2, roof: 'market', cat: '暮らし', unlock: 2, feedR: 9,
+    desc: '米・魚・酒を並べ、まわり9マスの長屋に届ける。米と魚の両方があると町人が喜ぶ。' },
+  claypit: { name: '粘土場', ic: '土', w: 2, h: 2, cost: { wood: 4 }, money: 10, work: 16, jobs: 2, out: { clay: 1 }, rate: 0.3, roof: 'yard', cat: '生産', unlock: 3, need: 'clay',
+    desc: '川べりの粘土の土地に建てる。瓦の材料になる粘土を掘る。' },
+  kiln: { name: '瓦窯', ic: '窯', w: 2, h: 2, cost: { wood: 6, stone: 10 }, money: 30, work: 30, jobs: 3, in: { clay: 2, log: 1 }, out: { tile: 2 }, rate: 0.2, roof: 'kiln', cat: '加工', unlock: 3,
+    desc: '粘土2と原木1（燃料）から瓦2を焼く。' },
+  tonya: { name: '問屋', ic: '問', w: 2, h: 2, cost: { wood: 10, stone: 4 }, money: 30, work: 26, jobs: 2, roof: 'kawara', cat: '物流', unlock: 3,
+    desc: '街道の商人と品物を売り買いする。何を売り、何を買うかを指示できる。' },
+  brewery: { name: '酒蔵', ic: '酒', w: 2, h: 2, cost: { wood: 12, tile: 4 }, money: 40, work: 34, jobs: 3, in: { rice: 2 }, out: { sake: 1 }, rate: 0.15, roof: 'kura', cat: '加工', unlock: 4,
+    desc: '米2から酒1を造る。市に並べると町人が喜ぶ。問屋で高く売れる。' },
+  bath: { name: '湯屋', ic: '湯', w: 2, h: 2, cost: { wood: 10, stone: 6 }, money: 30, work: 26, jobs: 2, in: { log: 1 }, roof: 'kawara', cat: '暮らし', unlock: 4, svcR: 7, svc: 12,
+    desc: 'まわり7マスの町人が湯に入れる。燃料に原木を使う。' },
+  shrine: { name: '神社', ic: '社', w: 2, h: 2, cost: { wood: 12, stone: 4 }, money: 30, work: 26, jobs: 1, roof: 'shrine', cat: '暮らし', unlock: 4, svcR: 8, faith: 10,
+    desc: 'まわり8マスの町人の心のよりどころ。' },
+  temple: { name: '寺', ic: '寺', w: 3, h: 3, cost: { wood: 20, stone: 10, tile: 10 }, money: 60, work: 50, jobs: 2, roof: 'temple', cat: '暮らし', unlock: 5, svcR: 11, faith: 15,
+    desc: 'まわり11マスの町人が通う。神社より広く、よく効く。' },
+};
+const CATS = ['住まい', '生産', '加工', '物流', '暮らし'];
+const STAGES = [
+  { name: '石垣', cost: { stone: 150 }, money: 50, work: 120, chapter: 5, desc: '城山に石垣を積む。石が150いる。' },
+  { name: '御殿', cost: { wood: 120, tile: 60 }, money: 100, work: 140, chapter: 6, desc: '本丸に殿の御殿を建てる。' },
+  { name: '天守', cost: { wood: 150, tile: 100, stone: 50 }, money: 300, work: 180, chapter: 6, desc: '城の顔となる天守を築く。' },
+];
+const FACES = {
+  saeki: { name: '家老・佐伯', ch: '佐', col: '#2f4f6f' },
+  gen: { name: '棟梁・源兵衛', ch: '源', col: '#7a5230' },
+  shino: { name: '村年寄・しの', ch: 'し', col: '#58733a' },
+  lord: { name: '殿・青葉守', ch: '殿', col: '#b23c2a' },
+};
+const CHAPTERS = [
+  { title: '序章　普請奉行、着任す',
+    intro: [['saeki', 'よくぞ参られた。戦の世は終わり、殿はこの川のほとりに城を築き、城下町を開くとお決めになった。'],
+      ['saeki', 'そなたを普請奉行に任ずる。まずは暮らしの土台を整えよ。'],
+      ['gen', '棟梁の源兵衛でさあ。建物は置いただけじゃ建ちません。人足が蔵から材木を運び、普請小屋の大工が組み上げるんで。'],
+      ['gen', '道がなけりゃ人も荷も通れねえ。まずは村の北西、森のそばに木こり小屋。道をつなぐのを忘れずに。']],
+    goals: [{ t: '北西の森のそばに木こり小屋を建てる', ok: () => doneCount('woodcutter') >= 1 },
+      { t: '製材所を建てる', ok: () => doneCount('sawmill') >= 1 },
+      { t: '長屋を建てて3軒にする', ok: () => doneCount('house') >= 3 }],
+    outro: [['saeki', 'うむ、村らしくなってきた。次は食い扶持じゃ。']], reward: 60, unlock: '漁師小屋・石切り場' },
+  { title: '第一章　村を開く',
+    intro: [['shino', '村年寄のしのと申します。田んぼは春に植えて秋に実り、冬は休みます。'],
+      ['shino', '冬を越すには、秋のうちに米を蔵にたくわえねばなりません。川で魚をとるのも助けになります。']],
+    goals: [{ t: '田んぼを2つ作る', ok: () => doneCount('paddy') >= 2 },
+      { t: '水辺に漁師小屋を建てる', ok: () => doneCount('fishery') >= 1 },
+      { t: '人口30人', ok: () => S.c.length >= 30 }],
+    outro: [['shino', 'これで皆、飢えずにすみます。人も少しずつ集まってまいりました。']], reward: 80, unlock: '市' },
+  { title: '第二章　市が立つ',
+    intro: [['saeki', '人が増えれば、蔵から配るだけでは手が回らぬ。市を立て、町人に食べ物が行き渡るようにせよ。'],
+      ['gen', '新しい蔵には石がいる。南の岩場で石を切り出しやしょう。']],
+    goals: [{ t: '市を建てる', ok: () => doneCount('market') >= 1 },
+      { t: '岩場に石切り場を建てる', ok: () => doneCount('quarry') >= 1 },
+      { t: '蔵に石を30ためる', ok: () => stock('stone') >= 30 },
+      { t: '人口45人', ok: () => S.c.length >= 45 }],
+    outro: [['saeki', '市はにぎわっておるな。だが城を築くには金がいる。']], reward: 100, unlock: '問屋・粘土場・瓦窯' },
+  { title: '第三章　街道の商い',
+    intro: [['saeki', '西の街道には商人が行き交う。問屋を構え、余った品を売って金を作れ。'],
+      ['gen', '城の屋根には瓦がいる。川べりの粘土を掘って、瓦窯で焼くんでさあ。燃料の原木もお忘れなく。']],
+    goals: [{ t: '問屋を建てる', ok: () => doneCount('tonya') >= 1 },
+      { t: '瓦窯を建てる', ok: () => doneCount('kiln') >= 1 },
+      { t: '瓦を40枚焼く', ok: () => (S.stats.tiles || 0) >= 40 },
+      { t: '所持金400両', ok: () => S.money >= 400 }],
+    outro: [['saeki', '金蔵も潤ってきた。そろそろ民の暮らしにも目を向けよ。']], reward: 150, unlock: '湯屋・神社・酒蔵・町家' },
+  { title: '第四章　暮らしを整える',
+    intro: [['shino', '町が大きくなるにつれ、皆の楽しみも求められております。湯屋や神社があれば、人も集まりましょう。'],
+      ['shino', '酒蔵の酒を市に並べれば、町人はたいそう喜びます。']],
+    goals: [{ t: '湯屋を建てる', ok: () => doneCount('bath') >= 1 },
+      { t: '神社を建てる', ok: () => doneCount('shrine') >= 1 },
+      { t: '満足度の平均を65にする', ok: () => S.happy >= 65 },
+      { t: '人口70人', ok: () => S.c.length >= 70 }],
+    outro: [['saeki', '町人の顔が明るい。殿もお喜びであろう。いよいよ築城じゃ。']], reward: 200, unlock: '寺・城の石垣' },
+  { title: '第五章　石垣を積む',
+    intro: [['saeki', '城山に石垣を積め。石を150、たっぷり集めよ。城山をタップすれば普請を始められる。'],
+      ['gen', '大仕事だ。人足と大工を増やして、城山まで道をつないでおくといい。']],
+    goals: [{ t: '城山に石垣を築く', ok: () => S.castle >= 1 }],
+    outro: [['saeki', '見事な石垣じゃ。']], reward: 200, unlock: '御殿・天守' },
+  { title: '第六章　御殿と天守',
+    intro: [['saeki', '次は御殿、そして天守。殿のお住まいと、城下の誇りを築くのだ。'],
+      ['gen', '瓦と材木が山ほどいる。窯と製材所をもう一つずつ増やすのも手ですぜ。']],
+    goals: [{ t: '御殿を建てる', ok: () => S.castle >= 2 },
+      { t: '天守を築く', ok: () => S.castle >= 3 }],
+    outro: [['lord', '見事じゃ。川のほとりに、これほどの城下町が生まれるとは。'],
+      ['lord', 'この町は、そなたの普請帖そのものよ。これからも民の暮らしを見守ってくれ。']], reward: 500, unlock: '' },
+];
+
+/* ======================= state ======================= */
+let S = null;
+let TER = [];
+const occ = new Int32Array(N).fill(-1);
+const road = new Uint8Array(N);
+const comp = new Int32Array(N).fill(-1);
+const bmap = new Map();
+let SET = { speed: 1, sound: true, ...store.get(SET_KEY, {}) };
+const saveSet = () => store.set(SET_KEY, SET);
+const B = (id) => bmap.get(id);
+const doneCount = (k) => S.b.reduce((n, b) => n + (b.k === k && b.done ? 1 : 0), 0);
+const hourOf = () => S.t % 24;
+const isWork = () => { const h = hourOf(); return h >= 5.5 && h < 18; };
+const afterHours = () => { const h = hourOf(); return h >= 18 || h < 4.5; };
+const dayIdx = () => Math.floor(S.t / 24);
+const season = () => Math.floor((dayIdx() % 20) / 5);
+const jobsOf = (b) => (b.k === 'castle' ? 0 : DEF[b.k].jobs || 0);
+const resOf = (b) => (b.k === 'castle' ? 0 : DEF[b.k].res || 0);
+const center = (b) => [b.x + b.w / 2, b.y + b.h / 2];
+const dist = (a, b) => { const [ax, ay] = center(a), [bx, by] = center(b); return Math.hypot(ax - bx, ay - by); };
+const manh = (a, b) => { const [ax, ay] = center(a), [bx, by] = center(b); return Math.abs(ax - bx) + Math.abs(ay - by); };
+function stock(g) { let n = 0; for (const b of S.b) if (b.done && b.k === 'warehouse') n += g0(b.store, g); return n; }
+function foodDays() { if (!S.c.length) return 99; let f = stock('rice') + stock('fish'); for (const b of S.b) if (b.k === 'market') f += g0(b.store, 'rice') + g0(b.store, 'fish'); return f / (S.c.length * EAT); }
+function residents(b) { let n = 0; for (const c of S.c) if (c.home === b.id) n++; return n; }
+
+function makeMap() {
+  const t = new Array(N).fill('.');
+  const put = (x, y, k) => { if (inb(x, y)) t[idx(x, y)] = k; };
+  const hh = (x, y) => { let n = (x * 374761393 + y * 668265263) | 0; n = Math.imul(n ^ (n >>> 13), 1274126177); return ((n ^ (n >>> 16)) >>> 0) / 4294967296; };
+  const blob = (cx, cy, rx, ry, k, rough = 0.25) => {
+    for (let y = Math.floor(cy - ry - 1); y <= cy + ry + 1; y++) for (let x = Math.floor(cx - rx - 1); x <= cx + rx + 1; x++) {
+      const d = ((x + 0.5 - cx) / rx) ** 2 + ((y + 0.5 - cy) / ry) ** 2;
+      if (d < 1 - rough + hh(x, y) * rough * 2) put(x, y, k);
+    }
+  };
+  blob(5, 7, 4.5, 4, 'f'); blob(11, 3, 3, 2, 'f'); blob(5.5, 12.8, 3.2, 2.4, 'f'); blob(27, 26, 4, 4, 'f'); blob(28.5, 15, 2, 3, 'f'); blob(21, 28, 2, 1.6, 'f'); blob(2, 30, 2, 2, 'f');
+  blob(27, 5, 4.2, 3.2, 'r'); blob(24.5, 9.5, 1.6, 1.2, 'r'); blob(11.5, 28, 1.9, 1.5, 'r');
+  const pts = [[21, -1], [21, 5], [22.5, 9], [22, 13], [19.5, 17], [17.5, 21], [16, 25], [15.5, 29], [15.5, 33]];
+  for (let s = 0; s < pts.length - 1; s++) {
+    const [x0, y0] = pts[s], [x1, y1] = pts[s + 1], steps = Math.ceil(Math.hypot(x1 - x0, y1 - y0) * 3);
+    for (let k = 0; k <= steps; k++) { const x = x0 + (x1 - x0) * k / steps, y = y0 + (y1 - y0) * k / steps; put(Math.floor(x), Math.floor(y), 'w'); put(Math.floor(x) + 1, Math.floor(y), 'w'); }
+  }
+  blob(5.5, 26.5, 1.8, 1.5, 'w', 0.1);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    if (t[idx(x, y)] !== '.') continue;
+    const nearW = [[1, 0], [-1, 0], [0, 1], [0, -1], [2, 0], [-2, 0]].some(([dx, dy]) => inb(x + dx, y + dy) && t[idx(x + dx, y + dy)] === 'w');
+    if (nearW && hh(x + 7, y + 3) < 0.45 && y > 10) t[idx(x, y)] = 'c';
+  }
+  for (let y = CASTLE.y; y < CASTLE.y + CASTLE.h; y++) for (let x = CASTLE.x; x < CASTLE.x + CASTLE.w; x++) t[idx(x, y)] = 'h';
+  for (let y = 15; y <= 24; y++) for (let x = 5; x <= 15; x++) if (t[idx(x, y)] !== 'w') t[idx(x, y)] = '.';
+  for (let x = 0; x <= 5; x++) t[idx(x, 20)] = '.';
+  return t;
+}
+
+/* ======================= world maintenance ======================= */
+function rebuildOcc() {
+  occ.fill(-1); bmap.clear();
+  for (const b of S.b) { bmap.set(b.id, b); for (let y = b.y; y < b.y + b.h; y++) for (let x = b.x; x < b.x + b.w; x++) occ[idx(x, y)] = b.id; }
+}
+function entrances(b) {
+  const out = [];
+  const push = (x, y) => { if (inb(x, y) && road[idx(x, y)]) out.push(idx(x, y)); };
+  for (let x = b.x; x < b.x + b.w; x++) { push(x, b.y - 1); push(x, b.y + b.h); }
+  for (let y = b.y; y < b.y + b.h; y++) { push(b.x - 1, y); push(b.x + b.w, y); }
+  return out;
+}
+function rebuildRoads() {
+  comp.fill(-1); let c = 0; const q = [];
+  for (let i = 0; i < N; i++) {
+    if (!road[i] || comp[i] >= 0) continue;
+    comp[i] = c; q.length = 0; q.push(i);
+    while (q.length) { const p = q.pop(), x = p % W, y = (p / W) | 0; for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy; if (!inb(nx, ny)) continue; const n = idx(nx, ny); if (road[n] && comp[n] < 0) { comp[n] = c; q.push(n); } } }
+    c++;
+  }
+  for (const b of S.b) { b._ent = entrances(b); b._comps = [...new Set(b._ent.map((i) => comp[i]))]; }
+}
+const connected = (a, b) => a._comps && b._comps && a._comps.some((c) => b._comps.includes(c));
+const gateConnected = (b) => b._comps && b._comps.includes(comp[GATE]);
+const prevA = new Int32Array(N), seenA = new Int32Array(N); let stamp = 1;
+function bfs(starts, goals) {
+  stamp++; const q = [];
+  for (const s of starts) { if (seenA[s] === stamp) continue; seenA[s] = stamp; prevA[s] = -1; q.push(s); }
+  let h = 0;
+  while (h < q.length) {
+    const c = q[h++];
+    if (goals.has(c)) { const p = []; let k = c; while (k !== -1) { p.push(k); k = prevA[k]; } return p.reverse(); }
+    const x = c % W, y = (c / W) | 0;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy; if (!inb(nx, ny)) continue; const n = idx(nx, ny); if (road[n] && seenA[n] !== stamp) { seenA[n] = stamp; prevA[n] = c; q.push(n); } }
+  }
+  return null;
+}
+const tilePt = (i) => [i % W + 0.5, ((i / W) | 0) + 0.5];
+function pathBetween(a, b) {
+  if (!a || !b) return null;
+  if (a === b) return [];
+  if (!a._ent.length || !b._ent.length) return null;
+  const t = bfs(a._ent, new Set(b._ent)); if (!t) return null;
+  const p = t.map(tilePt); p.push(center(b)); return p;
+}
+function pathFromTile(tile, b) { if (!b._ent.length) return null; const t = bfs([tile], new Set(b._ent)); if (!t) return null; const p = t.map(tilePt); p.push(center(b)); return p; }
+function resFactor(b) {
+  const d = DEF[b.k]; if (!d || !d.need) return 1;
+  const [cx, cy] = center(b);
+  const countIn = (r, kind) => { let n = 0; for (let y = Math.floor(cy - r - 1); y <= cy + r; y++) for (let x = Math.floor(cx - r - 1); x <= cx + r; x++) { if (!inb(x, y) || TER[idx(x, y)] !== kind) continue; if (Math.hypot(x + 0.5 - cx, y + 0.5 - cy) <= r + 0.01) n++; } return n; };
+  if (d.need === 'forest') return Math.min(1, countIn(3, 'f') / 10);
+  if (d.need === 'rock') return Math.min(1, countIn(b.w / 2 + 1.5, 'r') / 6);
+  if (d.need === 'clay') return Math.min(1, countIn(b.w / 2 + 1, 'c') / 4);
+  if (d.need === 'water1') return Math.min(1, countIn(2, 'w') / 5);
+  return 1;
+}
+function refreshWorld() { rebuildOcc(); rebuildRoads(); for (const b of S.b) b._res = resFactor(b); terrainDirty = true; }
+
+/* ======================= creation & save ======================= */
+function mkB(k, x, y, done) {
+  const d = k === 'castle' ? null : DEF[k];
+  const b = { id: S.nid++, k, x, y, w: d ? d.w : CASTLE.w, h: d ? d.h : CASTLE.h, done: !!done, prog: 0, work: d ? d.work : 0,
+    need: d && !done ? { ...d.cost } : {}, got: {}, inbound: {}, store: {}, reserved: {}, workers: [], prio: 1, stopped: false, cyc: 0, happy: null, hungry: 0, unhappy: 0 };
+  if (k === 'market') b.allow = { rice: true, fish: true, sake: true };
+  if (k === 'tonya') b.orders = {};
+  return b;
+}
+function newCitizen(home) {
+  const c = { id: S.nid++, home: home.id, job: null, st: 'home', at: home.id, x: 0, y: 0, path: null, pi: 0, task: null, carry: null };
+  [c.x, c.y] = center(home);
+  return c;
+}
+function newGame() {
+  TER = makeMap();
+  S = { v: 1, t: 4.95, money: 150, chapter: 0, b: [], c: [], nid: 1, castle: 0, happy: 55, stats: { today: { made: {}, used: {} }, yday: { made: {}, used: {} }, tiles: 0 },
+    seen: {}, arrivals: [], sold: 0 };
+  road.fill(0);
+  for (let x = 0; x <= 15; x++) road[idx(x, 20)] = 1;
+  for (let y = 15; y <= 24; y++) road[idx(9, y)] = 1;
+  const wh = mkB('warehouse', 10, 18, true); wh.store = { wood: 50, log: 10, stone: 20, rice: 120 };
+  const of = mkB('office', 10, 21, true);
+  const h1 = mkB('house', 7, 18, true), h2 = mkB('house', 7, 21, true);
+  S.b.push(wh, of, h1, h2);
+  refreshWorld();
+  for (const h of [h1, h2]) for (let i = 0; i < 8; i++) S.c.push(newCitizen(h));
+  assignJobs(false);
+  cam.x = 11; cam.y = 19.5; cam.z = 1.25;
+}
+function serialize() {
+  return {
+    v: 1, t: S.t, money: S.money, chapter: S.chapter, castle: S.castle, happy: S.happy, nid: S.nid, stats: S.stats, seen: S.seen, sold: S.sold,
+    ter: TER.join(''), road: Array.from(road).join(''),
+    b: S.b.map((b) => ({ id: b.id, k: b.k, x: b.x, y: b.y, w: b.w, h: b.h, done: b.done, prog: b.prog, work: b.work, need: b.need, got: b.got, store: b.store, workers: b.workers,
+      prio: b.prio, stopped: b.stopped, cyc: b.cyc, happy: b.happy, hungry: b.hungry, unhappy: b.unhappy, allow: b.allow, orders: b.orders, stage: b.stage })),
+    c: S.c.filter((c) => c.st !== 'arrive').map((c) => ({ id: c.id, home: c.home, job: c.job })),
+    cam: { x: cam.x, y: cam.y, z: cam.z },
+  };
+}
+function save() { if (!S) return; store.set(SAVE_KEY, serialize()); }
+function load() {
+  const d = store.get(SAVE_KEY, null);
+  if (!d || !d.ter || d.ter.length !== N || !Array.isArray(d.b)) return false;
+  TER = d.ter.split('');
+  for (let i = 0; i < N; i++) road[i] = d.road.charCodeAt(i) === 49 ? 1 : 0;
+  S = { v: 1, t: d.t, money: d.money, chapter: d.chapter, castle: d.castle || 0, happy: d.happy, nid: d.nid, stats: d.stats || { today: { made: {}, used: {} }, yday: { made: {}, used: {} }, tiles: 0 },
+    seen: d.seen || {}, sold: d.sold || 0, arrivals: [], b: [], c: [] };
+  for (const o of d.b) { const b = { ...o, inbound: {}, reserved: {}, workers: [] }; S.b.push(b); }
+  refreshWorld();
+  for (const o of d.c) {
+    const home = B(o.home); if (!home) continue;
+    const c = newCitizen(home); c.id = o.id; S.c.push(c);
+    const job = o.job ? B(o.job) : null;
+    if (job && job.done && !job.stopped && job.workers.length < jobsOf(job)) { c.job = job.id; job.workers.push(c.id); }
+  }
+  if (d.cam) { cam.x = d.cam.x; cam.y = d.cam.y; cam.z = d.cam.z; }
+  assignJobs(false);
+  const hl = hourOf(); if (hl >= 5 && hl < 18) for (const c of S.c) if (c.job) goWork(c);
+  return true;
+}
+
+/* ======================= citizens & jobs ======================= */
+function setPath(c, p, fromB) {
+  if (fromB) [c.x, c.y] = center(fromB);
+  c.path = p; c.pi = 0;
+  if (p && p.length === 0) { c.path = null; arrived(c); }
+}
+function goWork(c) {
+  const job = B(c.job), at = B(c.at);
+  if (!job || !at) return;
+  if (c.at === c.job) { c.st = 'work'; return; }
+  const p = pathBetween(at, job);
+  if (!p) { c.st = 'home'; c.noPath = true; return; }
+  c.noPath = false; c.st = 'toWork'; setPath(c, p, at);
+}
+function goHome(c) {
+  const home = B(c.home), at = B(c.at) || home;
+  if (!home) return;
+  if (c.at === c.home) { c.st = 'home'; c.path = null; return; }
+  const p = pathBetween(at, home);
+  c.st = 'toHome';
+  if (!p) { [c.x, c.y] = center(home); c.at = c.home; c.st = 'home'; c.path = null; return; }
+  setPath(c, p, at);
+}
+function cancelTask(c) {
+  const tk = c.task; if (!tk) return;
+  if (tk.type === 'haul') {
+    const src = B(tk.src), dst = B(tk.dst);
+    if (tk.stage === 'pick' && src) src.reserved[tk.g] = Math.max(0, g0(src.reserved, tk.g) - tk.n);
+    if ((tk.stage === 'pick' || tk.stage === 'drop') && dst) dst.inbound[tk.g] = Math.max(0, g0(dst.inbound, tk.g) - tk.n);
+    if (c.carry && c.carry.n > 0) { const wh = nearestWarehouse(B(c.at) || B(c.home)); if (wh) addTo(wh.store, c.carry.g, c.carry.n); }
+  }
+  c.task = null; c.carry = null;
+}
+function assign(c, b) { c.job = b.id; b.workers.push(c.id); if (isWork() && c.st === 'home') goWork(c); }
+function unassign(c) {
+  const b = B(c.job); if (b) b.workers = b.workers.filter((id) => id !== c.id);
+  if (c.task) cancelTask(c);
+  const wasOut = c.st !== 'home';
+  c.job = null;
+  if (wasOut && c.st !== 'arrive') goHome(c);
+}
+function assignJobs(steal) {
+  const cmap = new Map(S.c.map((c) => [c.id, c]));
+  for (const b of S.b) {
+    const valid = b.done && !b.stopped && jobsOf(b) > 0;
+    b.workers = b.workers.filter((id) => cmap.has(id) && cmap.get(id).job === b.id);
+    if (!valid) { for (const id of b.workers) { const c = cmap.get(id); c.job = null; if (c.task) cancelTask(c); if (c.st !== 'home') goHome(c); } b.workers = []; continue; }
+    while (b.workers.length > jobsOf(b)) { const c = cmap.get(b.workers.pop()); c.job = null; if (c.task) cancelTask(c); if (c.st !== 'home') goHome(c); }
+  }
+  for (const c of S.c) if (c.job && !B(c.job)) c.job = null;
+  const active = S.b.filter((b) => b.done && !b.stopped && jobsOf(b) > 0).sort((a, b) => b.prio - a.prio || a.id - b.id);
+  const unemployed = S.c.filter((c) => !c.job && c.st !== 'arrive');
+  for (const b of active) {
+    while (b.workers.length < jobsOf(b) && unemployed.length) {
+      let bi = 0, bd = 1e9;
+      for (let i = 0; i < unemployed.length; i++) { const h = B(unemployed[i].home); const d = h ? manh(h, b) : 99; if (d < bd) { bd = d; bi = i; } }
+      assign(unemployed.splice(bi, 1)[0], b);
+    }
+  }
+  if (steal) {
+    for (const b of active) {
+      while (b.workers.length < jobsOf(b)) {
+        const donor = active.filter((o) => o.prio < b.prio && o.workers.length > 0).sort((a, c) => a.prio - c.prio)[0];
+        if (!donor) break;
+        const c = cmap.get(donor.workers[donor.workers.length - 1]);
+        unassign(c); assign(c, b);
+      }
+    }
+  }
+}
+function removeCitizen(c) {
+  if (c.job) unassign(c);
+  if (c.task) cancelTask(c);
+  S.c = S.c.filter((x) => x !== c);
+}
+function nearestWarehouse(from, needConn = false) {
+  let best = null, bd = 1e9;
+  for (const b of S.b) { if (b.k !== 'warehouse' || !b.done) continue; if (needConn && !connected(b, from)) continue; const d = from ? manh(b, from) : 0; if (d < bd) { bd = d; best = b; } }
+  return best;
+}
+
+/* ======================= movement & arrivals ======================= */
+function advance(c, dtH) {
+  let d = WALK * dtH;
+  while (d > 0 && c.pi < c.path.length) {
+    const [tx, ty] = c.path[c.pi], dx = tx - c.x, dy = ty - c.y, l = Math.hypot(dx, dy);
+    if (l <= d) { c.x = tx; c.y = ty; d -= l; c.pi++; } else { c.x += dx / l * d; c.y += dy / l * d; d = 0; }
+  }
+  return c.pi >= c.path.length;
+}
+function arrived(c) {
+  if (c.st === 'toWork') { c.at = c.job; if (!B(c.job)) { c.job = null; goHome(c); return; } c.st = 'work'; if (afterHours()) goHome(c); return; }
+  if (c.st === 'toHome') { c.at = c.home; c.st = 'home'; return; }
+  if (c.st === 'arrive') { c.at = c.home; c.st = 'home'; assignJobs(false); return; }
+  if (c.st === 'task') taskArrived(c);
+}
+function endTask(c) {
+  const job = B(c.job);
+  c.task = null; c.carry = null;
+  if (!job) { goHome(c); return; }
+  if (afterHours()) { goHome(c); return; }
+  if (c.at === c.job) { c.st = 'work'; return; }
+  const p = pathBetween(B(c.at), job);
+  if (!p) { [c.x, c.y] = center(job); c.at = c.job; c.st = 'work'; return; }
+  c.task = { type: 'back' }; c.st = 'task'; setPath(c, p, B(c.at));
+}
+function taskArrived(c) {
+  const tk = c.task;
+  if (!tk) { c.st = 'work'; return; }
+  if (tk.type === 'back') { c.task = null; c.st = 'work'; c.at = c.job; if (afterHours()) goHome(c); return; }
+  if (tk.type === 'haul') {
+    const src = B(tk.src), dst = B(tk.dst);
+    if (tk.stage === 'pick') {
+      let take = 0; c.at = tk.src;
+      if (src) { take = Math.min(tk.n, g0(src.store, tk.g)); src.store[tk.g] = g0(src.store, tk.g) - take; src.reserved[tk.g] = Math.max(0, g0(src.reserved, tk.g) - tk.n); }
+      if (!dst || take <= 0) { if (dst) dst.inbound[tk.g] = Math.max(0, g0(dst.inbound, tk.g) - tk.n); if (src && take > 0) addTo(src.store, tk.g, take); endTask(c); return; }
+      c.carry = { g: tk.g, n: take }; tk.stage = 'drop';
+      const p = pathBetween(src, dst);
+      if (!p) { addTo(src.store, tk.g, take); c.carry = null; dst.inbound[tk.g] = Math.max(0, g0(dst.inbound, tk.g) - tk.n); endTask(c); return; }
+      setPath(c, p, src); return;
+    }
+    if (tk.stage === 'drop') {
+      c.at = tk.dst;
+      if (dst) {
+        const n = c.carry ? c.carry.n : 0;
+        if (!dst.done) { addTo(dst.got, tk.g, n); addTo(S.stats.today.used, tk.g, n); } else addTo(dst.store, tk.g, n);
+        dst.inbound[tk.g] = Math.max(0, g0(dst.inbound, tk.g) - tk.n);
+      } else if (c.carry) { const wh = nearestWarehouse(B(c.home)); if (wh) addTo(wh.store, c.carry.g, c.carry.n); }
+      endTask(c); return;
+    }
+  }
+  if (tk.type === 'build') {
+    if (tk.stage === 'go') { c.at = tk.site; if (!B(tk.site) || B(tk.site).done) { endTask(c); return; } tk.stage = 'work'; tk.wait = 0; return; }
+  }
+}
+function moveAgents(dtH) {
+  for (const c of S.c.slice()) { if (!c.path) continue; if (advance(c, dtH)) { c.path = null; arrived(c); } }
+}
+
+/* ======================= logistics ======================= */
+function pickable(b, g) {
+  if (!b.done) return false;
+  if (b.k === 'warehouse') return true;
+  if (b.k === 'tonya') return !!(b.orders && b.orders[g] && b.orders[g].mode === 'buy');
+  const d = DEF[b.k]; return !!(d && d.out && d.out[g]);
+}
+const avail = (b, g) => g0(b.store, g) - g0(b.reserved, g);
+function findSource(g, dst, onlyWh) {
+  let best = null, bd = 1e9;
+  for (const b of S.b) {
+    if (b === dst || !pickable(b, g) || avail(b, g) < 1) continue;
+    if (onlyWh && b.k !== 'warehouse') continue;
+    if (!connected(b, dst)) continue;
+    const d = manh(b, dst) + (b.k === 'warehouse' ? 0 : -1);
+    if (d < bd) { bd = d; best = b; }
+  }
+  return best;
+}
+function assignHaul(p, src, dst, g, n) {
+  addTo(src.reserved, g, n); addTo(dst.inbound, g, n);
+  p.task = { type: 'haul', src: src.id, dst: dst.id, g, n, stage: 'pick' }; p.st = 'task';
+  const path = pathBetween(B(p.at), src);
+  if (!path) { cancelTask(p); p.st = 'work'; return false; }
+  setPath(p, path, B(p.at)); return true;
+}
+function gatherRequests() {
+  const reqs = [];
+  for (const b of S.b) {
+    if (!b.done) {
+      if (b.stopped) continue;
+      for (const g in b.need) { const want = b.need[g] - g0(b.got, g) - g0(b.inbound, g); if (want > 0) reqs.push({ b, g, want, pr: b.prio * 10 + 3 }); }
+      continue;
+    }
+    if (b.stopped || b.k === 'castle') continue;
+    const d = DEF[b.k];
+    if (d.in && b.workers.length) for (const g in d.in) { const want = IN_TARGET - g0(b.store, g) - g0(b.inbound, g); if (want > 0) reqs.push({ b, g, want, pr: b.prio * 10 + 1 }); }
+    if (b.k === 'market' && b.workers.length) for (const g of ['rice', 'fish', 'sake']) { if (!b.allow[g]) continue; const want = (g === 'sake' ? 12 : 30) - g0(b.store, g) - g0(b.inbound, g); if (want > 0) reqs.push({ b, g, want, pr: b.prio * 10 + 2 }); }
+    if (b.k === 'tonya' && b.workers.length) for (const g in b.orders) {
+      const o = b.orders[g]; if (o.mode !== 'sell') continue;
+      const surplus = stock(g) - o.n; const want = Math.min(15 - g0(b.store, g) - g0(b.inbound, g), surplus);
+      if (want > 0) reqs.push({ b, g, want, pr: b.prio * 10, onlyWh: true });
+    }
+  }
+  return reqs.sort((a, b) => b.pr - a.pr);
+}
+function dispatch() {
+  const idle = S.c.filter((c) => c.st === 'work' && c.at === c.job && c.job && B(c.job) && B(c.job).k === 'warehouse');
+  if (idle.length) {
+    const pickPorter = (src) => {
+      let bi = -1, bd = 1e9;
+      for (let i = 0; i < idle.length; i++) { const wh = B(idle[i].job); if (!connected(wh, src)) continue; const d = manh(wh, src); if (d < bd) { bd = d; bi = i; } }
+      return bi >= 0 ? idle.splice(bi, 1)[0] : null;
+    };
+    for (const r of gatherRequests()) {
+      let tries = 0;
+      while (r.want > 0 && idle.length && tries < 3) {
+        tries++;
+        const src = findSource(r.g, r.b, r.onlyWh); if (!src) break;
+        const p = pickPorter(src); if (!p) break;
+        const n = Math.min(CARRY, r.want, avail(src, r.g)); if (n <= 0) { idle.push(p); break; }
+        if (assignHaul(p, src, r.b, r.g, n)) r.want -= n;
+      }
+      if (!idle.length) break;
+    }
+    const surplus = [];
+    for (const b of S.b) {
+      if (!b.done || b.k === 'warehouse' || b.k === 'castle') continue;
+      for (const g in b.store) { if (!pickable(b, g)) continue; const a = avail(b, g); if (a >= 3 || (a >= 1 && hourOf() >= 15)) surplus.push([b, g, a]); }
+    }
+    surplus.sort((x, y) => y[2] - x[2]);
+    for (const [b, g, a] of surplus) {
+      if (!idle.length) break;
+      const wh = nearestWarehouse(b, true); if (!wh) continue;
+      const p = pickPorter(b); if (!p) continue;
+      assignHaul(p, b, wh, g, Math.min(CARRY, a));
+    }
+  }
+  const idleB = S.c.filter((c) => c.st === 'work' && c.at === c.job && c.job && B(c.job) && B(c.job).k === 'office');
+  if (idleB.length) {
+    const sites = S.b.filter((b) => !b.done && !b.stopped).sort((a, b) => b.prio - a.prio || a.id - b.id);
+    for (const s of sites) {
+      if (!idleB.length) break;
+      if (s.prog >= s.work * matFrac(s) - 0.05) continue;
+      const cap = s.k === 'castle' ? 6 : 3;
+      let have = S.c.filter((c) => c.task && c.task.type === 'build' && c.task.site === s.id).length;
+      while (have < cap && idleB.length) {
+        let bi = -1, bd = 1e9;
+        for (let i = 0; i < idleB.length; i++) { const of = B(idleB[i].job); if (!connected(of, s)) continue; const d = manh(of, s); if (d < bd) { bd = d; bi = i; } }
+        if (bi < 0) break;
+        const c = idleB.splice(bi, 1)[0];
+        const p = pathBetween(B(c.at), s); if (!p) continue;
+        c.task = { type: 'build', site: s.id, stage: 'go' }; c.st = 'task'; setPath(c, p, B(c.at)); have++;
+      }
+    }
+  }
+}
+function matFrac(s) { let f = 1; for (const g in s.need) if (s.need[g] > 0) f = Math.min(f, g0(s.got, g) / s.need[g]); return f; }
+
+/* ======================= production & daily ======================= */
+const eff = () => 0.6 + 0.5 * S.happy / 100;
+function produce(dtH) {
+  if (!isWork()) return;
+  const present = new Map();
+  for (const c of S.c) if (c.st === 'work' && c.at === c.job && c.job) present.set(c.job, (present.get(c.job) || 0) + 1);
+  for (const b of S.b) {
+    if (!b.done || b.stopped || b.k === 'castle') continue;
+    const d = DEF[b.k], pres = present.get(b.id) || 0;
+    b._pres = pres; b._warn = null;
+    if (b.k === 'tonya' && pres) {
+      b._sell = (b._sell || 0) + pres * 3 * dtH;
+      while (b._sell >= 1) {
+        const g = Object.keys(b.orders).find((k) => b.orders[k].mode === 'sell' && g0(b.store, k) >= 1);
+        if (!g) { b._sell = 0; break; }
+        b.store[g] -= 1; S.money += PRICE[g]; S.sold += PRICE[g]; b._sell -= 1;
+      }
+    }
+    if (!d.out) continue;
+    if (!pres) continue;
+    const sm = d.season ? d.season[season()] : 1;
+    if (sm === 0) { b._warn = '冬'; continue; }
+    b.cyc += d.rate * pres * eff() * dtH * sm * (b._res ?? 1);
+    while (b.cyc >= 1) {
+      if (d.in) { const ok = Object.keys(d.in).every((g) => g0(b.store, g) >= d.in[g]); if (!ok) { b.cyc = 1; b._warn = '材'; break; } }
+      const full = Object.keys(d.out).some((g) => g0(b.store, g) >= OUT_CAP);
+      if (full) { b.cyc = 1; b._warn = '満'; break; }
+      if (d.in) for (const g in d.in) { b.store[g] -= d.in[g]; addTo(S.stats.today.used, g, d.in[g]); }
+      for (const g in d.out) { addTo(b.store, g, d.out[g]); addTo(S.stats.today.made, g, d.out[g]); if (g === 'tile') S.stats.tiles += d.out[g]; }
+      b.cyc -= 1;
+    }
+  }
+}
+function buildWork(dtH) {
+  for (const c of S.c) {
+    if (!c.task || c.task.type !== 'build' || c.task.stage !== 'work') continue;
+    if (afterHours()) { c.task = null; goHome(c); continue; }
+    const s = B(c.task.site);
+    if (!s || s.done) { endTask(c); continue; }
+    const max = s.work * matFrac(s);
+    if (s.prog < max) { s.prog = Math.min(max, s.prog + BUILD_RATE * eff() * dtH); c.task.wait = 0; }
+    else { c.task.wait += dtH; if (c.task.wait > 1) { endTask(c); continue; } }
+    if (s.prog >= s.work - 1e-6 && matFrac(s) >= 1) completeSite(s);
+  }
+}
+function completeSite(s) {
+  if (s.done) return;
+  s.done = true; s.prog = s.work; s.need = {}; s.got = {};
+  for (const c of S.c) if (c.task && c.task.type === 'build' && c.task.site === s.id) endTask(c);
+  if (s.k === 'castle') { S.castle = s.stage + 1; toast(`${STAGES[s.stage].name}が完成した！`); sfx.bell(); }
+  else { toast(`${DEF[s.k].name}が完成した`); sfx.done(); }
+  s._res = resFactor(s);
+  assignJobs(false);
+  save();
+}
+function onHour(hh) {
+  const h = ((hh % 24) + 24) % 24;
+  if (h === 4) assignJobs(true);
+  if (h === 5) { for (const c of S.c) if (c.job && c.st === 'home') goWork(c); }
+  if (h === 6) { planImmigration(); tonyaBuy(); }
+  if (h === 18) {
+    for (const c of S.c) {
+      if (c.st === 'work') goHome(c);
+      else if (c.st === 'task' && c.task && c.task.type === 'build' && c.task.stage === 'work') { c.task = null; goHome(c); }
+    }
+  }
+  if (h === 0) daily();
+}
+function planImmigration() {
+  let vac = 0;
+  for (const b of S.b) if (b.done && resOf(b)) vac += resOf(b) - residents(b);
+  if (vac <= 0) return;
+  if (S.happy < 40 && S.c.length >= 12) return;
+  const n = Math.min(vac, 1 + Math.floor(S.happy / 18));
+  for (let i = 0; i < n; i++) S.arrivals.push(dayIdx() * 24 + 6.5 + i * (9 / n));
+}
+function spawnArrival() {
+  if (!road[GATE]) return false;
+  const houses = S.b.filter((b) => b.done && resOf(b) && residents(b) < resOf(b) && gateConnected(b));
+  if (!houses.length) return false;
+  houses.sort((a, b) => residents(a) / resOf(a) - residents(b) / resOf(b));
+  const h = houses[0];
+  const p = pathFromTile(GATE, h); if (!p) return false;
+  const c = newCitizen(h); c.st = 'arrive'; c.at = null; [c.x, c.y] = tilePt(GATE); c.x -= 0.5;
+  S.c.push(c); setPath(c, p); return true;
+}
+function tonyaBuy() {
+  for (const b of S.b) {
+    if (b.k !== 'tonya' || !b.done || !b.workers.length) continue;
+    for (const g in b.orders) {
+      const o = b.orders[g]; if (o.mode !== 'buy' || o.n <= 0) continue;
+      const cost = Math.ceil(o.n * PRICE[g] * 1.6);
+      if (S.money >= cost) { S.money -= cost; addTo(b.store, g, o.n); }
+      else toast(`お金が足りず、${GOODS[g].name}を買えなかった`);
+    }
+  }
+}
+function daily() {
+  const houses = S.b.filter((b) => b.done && resOf(b));
+  const feeders = S.b.filter((b) => b.done && (b.k === 'warehouse' || (b.k === 'market' && b.workers.length)));
+  const baths = S.b.filter((b) => b.done && b.k === 'bath' && b.workers.length);
+  const faiths = S.b.filter((b) => b.done && (b.k === 'shrine' || b.k === 'temple') && b.workers.length);
+  let tot = 0, sum = 0; const leave = [];
+  for (const h of houses) {
+    const R = residents(h); if (!R) { h.happy = null; h.fed = null; continue; }
+    const need = R * EAT; let gr = 0, gf = 0, gs = 0;
+    const src = feeders.filter((f) => dist(f, h) <= DEF[f.k].feedR).sort((a, b) => dist(a, h) - dist(b, h));
+    for (const f of src) {
+      const half = need / 2;
+      const tr = Math.min(Math.max(0, half - gr), g0(f.store, 'rice')); f.store.rice = g0(f.store, 'rice') - tr; gr += tr;
+      const tf = Math.min(Math.max(0, half - gf), g0(f.store, 'fish')); f.store.fish = g0(f.store, 'fish') - tf; gf += tf;
+    }
+    for (const f of src) {
+      const rest = need - gr - gf; if (rest <= 1e-6) break;
+      const tr = Math.min(rest, g0(f.store, 'rice')); f.store.rice -= tr; gr += tr;
+      const tf = Math.min(need - gr - gf, g0(f.store, 'fish')); f.store.fish -= tf; gf += tf;
+    }
+    for (const f of src) { if (f.k !== 'market') continue; const ts = Math.min(R * 0.1 - gs, g0(f.store, 'sake')); if (ts > 0) { f.store.sake -= ts; gs += ts; } }
+    addTo(S.stats.today.used, 'rice', gr); addTo(S.stats.today.used, 'fish', gf); addTo(S.stats.today.used, 'sake', gs);
+    const fed = gr + gf >= need - 1e-6, variety = gr > 0.01 && gf > 0.01, sake = gs >= R * 0.1 - 1e-6;
+    let bath = false;
+    for (const b of baths) if (dist(b, h) <= DEF.bath.svcR && g0(b.store, 'log') >= 0.3) { b.store.log -= 0.3; addTo(S.stats.today.used, 'log', 0.3); bath = true; break; }
+    let faith = 0; for (const f of faiths) if (dist(f, h) <= DEF[f.k].svcR) faith = Math.max(faith, DEF[f.k].faith);
+    const happy = clamp(22 + (fed ? 30 : 0) + (variety ? 10 : 0) + (sake ? 10 : 0) + (bath ? DEF.bath.svc : 0) + faith + S.castle * 4 + (h.k === 'machiya' ? 4 : 0), 0, 100);
+    h.happy = happy; h.fed = fed; h.variety = variety; h.sake = sake; h.bath = bath; h.faith = faith;
+    h.hungry = fed ? 0 : (h.hungry || 0) + 1;
+    h.unhappy = happy < 35 ? (h.unhappy || 0) + 1 : 0;
+    if (h.hungry >= 2 || h.unhappy >= 3) { const n = h.hungry >= 2 ? Math.min(R, 2) : 1; leave.push([h, n]); h.unhappy = 0; }
+    tot += R; sum += happy * R;
+  }
+  S.happy = tot ? Math.round(sum / tot) : S.happy;
+  let left = 0;
+  for (const [h, n] of leave) { const cs = S.c.filter((c) => c.home === h.id).slice(0, n); cs.forEach(removeCitizen); left += cs.length; }
+  if (left) toast(`食べ物や暮らしに困り、${left}人が町を去った`);
+  S.stats.yday = S.stats.today; S.stats.today = { made: {}, used: {} };
+  const d = dayIdx();
+  if (d > 0 && d % 5 === 0) {
+    let tax = 0; for (const h of houses) { const R = residents(h); if (R) tax += R * 1.5 * (0.5 + (h.happy || 50) / 100) * (DEF[h.k].taxMul || 1); }
+    tax = Math.round(tax); S.money += tax;
+    toast(`${SEASONS[season()]}になった。年貢と運上金 ${tax}両が納められた`); sfx.coin();
+  }
+  save();
+}
+
+/* ======================= simulation tick ======================= */
+function tick(dtH) {
+  const t0 = S.t; S.t += dtH;
+  for (let hh = Math.floor(t0) + 1; hh <= Math.floor(S.t); hh++) onHour(hh);
+  if (Math.floor(S.t * 4) > Math.floor(t0 * 4) && isWork()) dispatch();
+  while (S.arrivals.length && S.arrivals[0] <= S.t) { S.arrivals.shift(); spawnArrival(); }
+  moveAgents(dtH);
+  produce(dtH);
+  buildWork(dtH);
+}
+
+/* ======================= actions ======================= */
+function canPlace(k, x, y) {
+  const d = DEF[k];
+  if (x < 0 || y < 0 || x + d.w > W || y + d.h > H) return { ok: false, why: '地図の外です' };
+  for (let yy = y; yy < y + d.h; yy++) for (let xx = x; xx < x + d.w; xx++) {
+    const i = idx(xx, yy), t = TER[i];
+    if (occ[i] >= 0) return { ok: false, why: 'ほかの建物と重なっています' };
+    if (road[i]) return { ok: false, why: '道の上には建てられません' };
+    if (t === 'w') return { ok: false, why: '水の上には建てられません' };
+    if (t === 'r') return { ok: false, why: '岩場には建てられません' };
+    if (t === 'h') return { ok: false, why: '城山には城しか建てられません' };
+  }
+  const fake = { k, x, y, w: d.w, h: d.h };
+  if (d.need === 'forest' && resFactor(fake) < 0.3) return { ok: false, why: 'まわり3マスに森が少なすぎます' };
+  if (d.need === 'rock' && resFactor(fake) < 0.3) return { ok: false, why: '岩場に接していません' };
+  if (d.need === 'clay' && resFactor(fake) < 0.25) return { ok: false, why: '粘土の土地（赤茶色）が足りません' };
+  if (d.need === 'water1' && resFactor(fake) < 0.3) return { ok: false, why: '水辺に接していません' };
+  if (d.need === 'water3') { const [cx, cy] = center(fake); let ok = false; for (let yy = Math.floor(cy - 4.5); yy <= cy + 4.5 && !ok; yy++) for (let xx = Math.floor(cx - 4.5); xx <= cx + 4.5; xx++) if (inb(xx, yy) && TER[idx(xx, yy)] === 'w' && Math.max(Math.abs(xx + 0.5 - cx), Math.abs(yy + 0.5 - cy)) <= 1.5 + 3) { ok = true; break; } if (!ok) return { ok: false, why: '川や池から3マス以内に作ってください' }; }
+  if (S.money < d.money) return { ok: false, why: `お金が足りません（${d.money}両）` };
+  const ent = entrances(fake);
+  return { ok: true, warn: ent.length ? '' : '道に接していません。あとで道をつないでください' };
+}
+function placeBuilding(k, x, y) {
+  const r = canPlace(k, x, y); if (!r.ok) return false;
+  const d = DEF[k];
+  S.money -= d.money;
+  for (let yy = y; yy < y + d.h; yy++) for (let xx = x; xx < x + d.w; xx++) if (TER[idx(xx, yy)] === 'f') TER[idx(xx, yy)] = '.';
+  const b = mkB(k, x, y, false); S.b.push(b); refreshWorld();
+  sfx.place(); save();
+  return true;
+}
+function roadTileOk(i) { const t = TER[i]; return occ[i] < 0 && t !== 'r' && t !== 'h'; }
+function lPath(a, b) {
+  const ax = a % W, ay = (a / W) | 0, bx = b % W, by = (b / W) | 0;
+  const make = (hFirst) => {
+    const out = []; let x = ax, y = ay; out.push(idx(x, y));
+    const stepX = () => { while (x !== bx) { x += Math.sign(bx - x); out.push(idx(x, y)); } };
+    const stepY = () => { while (y !== by) { y += Math.sign(by - y); out.push(idx(x, y)); } };
+    if (hFirst) { stepX(); stepY(); } else { stepY(); stepX(); }
+    return out;
+  };
+  for (const hf of [true, false]) { const p = make(hf); if (p.every(roadTileOk)) return { tiles: p, ok: true }; }
+  return { tiles: make(true), ok: false };
+}
+function roadCost(tiles) { let m = 0, br = 0; for (const i of tiles) { if (road[i]) continue; if (TER[i] === 'w') { m += 8; br++; } else m += 1; } return { m, br }; }
+function placeRoad(tiles) {
+  const c = roadCost(tiles); if (S.money < c.m) return false;
+  S.money -= c.m;
+  for (const i of tiles) { road[i] = 1; if (TER[i] === 'f') TER[i] = '.'; }
+  refreshWorld(); sfx.place(); save(); return true;
+}
+function demolish(b) {
+  if (b.k === 'castle' && b.done) return;
+  for (const c of S.c.slice()) {
+    if (c.home === b.id) removeCitizen(c);
+    else if (c.job === b.id) unassign(c);
+    else if (c.task && (c.task.src === b.id || c.task.dst === b.id || c.task.site === b.id)) { cancelTask(c); goHome(c); if (c.job) { c.st = 'home'; c.at = c.home; [c.x, c.y] = center(B(c.home)); c.path = null; } }
+    if (c.at === b.id && S.c.includes(c)) { const h = B(c.home); if (h) { c.at = h.id; [c.x, c.y] = center(h); c.st = 'home'; c.path = null; } }
+  }
+  S.b = S.b.filter((x) => x !== b);
+  refreshWorld(); assignJobs(false); sfx.remove(); save();
+}
+function removeRoad(i) { if (i === GATE) return false; road[i] = 0; refreshWorld(); sfx.remove(); save(); return true; }
+function startCastleStage() {
+  const st = STAGES[S.castle]; if (!st || S.chapter < st.chapter) return;
+  if (S.money < st.money) { toast(`お金が足りません（${st.money}両）`); return; }
+  let b = S.b.find((x) => x.k === 'castle');
+  S.money -= st.money;
+  if (!b) { b = mkB('castle', CASTLE.x, CASTLE.y, false); S.b.push(b); }
+  b.done = false; b.stage = S.castle; b.need = { ...st.cost }; b.got = {}; b.prog = 0; b.work = st.work; b.inbound = {};
+  refreshWorld(); sfx.place(); save();
+  toast(`${st.name}の普請を始めた`);
+}
+
+/* ======================= sound ======================= */
+const sfx = (() => {
+  let ac = null, master = null;
+  const ensure = () => { if (!SET.sound) return null; if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); master = ac.createGain(); master.gain.value = 0.28; master.connect(ac.destination); } catch (e) { return null; } } if (ac.state === 'suspended') ac.resume().catch(() => {}); return ac; };
+  const tone = (f, d, type = 'sine', v = 0.3, w = 0, sl = 0) => { const a = ensure(); if (!a) return; const t = a.currentTime + w, o = a.createOscillator(), g = a.createGain(); o.type = type; o.frequency.setValueAtTime(f, t); if (sl) o.frequency.exponentialRampToValueAtTime(sl, t + d); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + d); o.connect(g); g.connect(master); o.start(t); o.stop(t + d + 0.05); };
+  return {
+    unlock() { ensure(); },
+    tap() { tone(880, 0.05, 'triangle', 0.08); },
+    place() { tone(220, 0.12, 'triangle', 0.3, 0, 140); tone(330, 0.08, 'triangle', 0.12, 0.05); },
+    remove() { tone(180, 0.18, 'sawtooth', 0.08, 0, 90); },
+    done() { [587, 784, 988].forEach((f, i) => tone(f, 0.3, 'triangle', 0.15, i * 0.08)); },
+    coin() { tone(1318, 0.08, 'square', 0.06); tone(1760, 0.16, 'square', 0.05, 0.07); },
+    bell() { tone(130, 3.5, 'sine', 0.4); tone(262, 2.8, 'sine', 0.18); tone(393, 2.2, 'sine', 0.08); },
+    page() { tone(660, 0.06, 'triangle', 0.06); },
+  };
+})();
+
+/* ======================= camera & rendering ======================= */
+const cv = $('cv'), ctx = cv.getContext('2d'), stageEl = $('stage');
+const cam = { x: 11, y: 19.5, z: 1.25 };
+let DPR = 1, CW = 0, CH = 0, terrainC = null, terrainDirty = true, rafId = 0, lastT = 0;
+let mode = null, selected = null, paused = false;
+const tsz = () => TS * cam.z;
+const sx = (x) => (x - cam.x) * tsz() + CW / 2;
+const sy = (y) => (y - cam.y) * tsz() + CH / 2;
+const wx = (px) => (px - CW / 2) / tsz() + cam.x;
+const wy = (py) => (py - CH / 2) / tsz() + cam.y;
+function resize() {
+  const r = stageEl.getBoundingClientRect(); if (r.width < 10 || r.height < 10) return;
+  DPR = Math.min(3, window.devicePixelRatio || 1); CW = r.width; CH = r.height;
+  cv.width = Math.round(CW * DPR); cv.height = Math.round(CH * DPR); clampCam();
+}
+function clampCam() { cam.z = clamp(cam.z, 0.55, 2.6); cam.x = clamp(cam.x, 0, W); cam.y = clamp(cam.y, 0, H); }
+const TPX = 40;
+function buildTerrain() {
+  const c = terrainC || document.createElement('canvas'); c.width = W * TPX; c.height = H * TPX;
+  const g = c.getContext('2d'); g.clearRect(0, 0, c.width, c.height);
+  const hh = (x, y, s = 0) => { let n = (x * 73856093 ^ y * 19349663 ^ s * 83492791) | 0; n = Math.imul(n ^ (n >>> 13), 1274126177); return ((n ^ (n >>> 16)) >>> 0) / 4294967296; };
+  const P = TPX;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const t = TER[idx(x, y)], X = x * P, Y = y * P;
+    g.fillStyle = t === 'w' ? '#8fa9c0' : t === 'c' ? '#d8b896' : t === 'h' ? '#d9cfa6' : t === 'r' ? '#d2c8b0' : (x + y) % 2 ? '#e3dab8' : '#e0d7b3';
+    g.fillRect(X, Y, P + 1, P + 1);
+  }
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const t = TER[idx(x, y)], X = x * P, Y = y * P;
+    if (t === '.') { g.strokeStyle = 'rgba(110,120,70,.35)'; g.lineWidth = 1.2; for (let k = 0; k < 2; k++) { const px = X + hh(x, y, k) * P, py = Y + hh(y, x, k + 3) * P; g.beginPath(); g.moveTo(px, py); g.lineTo(px - 2, py - 5); g.moveTo(px + 3, py); g.lineTo(px + 4, py - 4); g.stroke(); } }
+    else if (t === 'w') {
+      g.strokeStyle = 'rgba(47,79,111,.45)'; g.lineWidth = 1.4;
+      for (let k = 0; k < 2; k++) { const py = Y + P * (0.3 + k * 0.4); g.beginPath(); for (let s = 0; s <= 4; s++) { const px = X + s * P / 4; const yy = py + Math.sin((x * 4 + s) * 1.6) * 2.5; if (s) g.lineTo(px, yy); else g.moveTo(px, yy); } g.stroke(); }
+    } else if (t === 'f') {
+      for (let k = 0; k < 3; k++) {
+        const px = X + P * (0.25 + 0.5 * hh(x, y, k)), py = Y + P * (0.28 + 0.5 * hh(y, x, k + 5)), r = P * (0.2 + 0.08 * hh(x, y, k + 9));
+        g.fillStyle = '#6f8a52'; g.beginPath(); g.arc(px, py, r, 0, 7); g.fill();
+        g.strokeStyle = 'rgba(43,52,30,.75)'; g.lineWidth = 1.3; g.stroke();
+        g.fillStyle = 'rgba(255,255,255,.15)'; g.beginPath(); g.arc(px - r * 0.3, py - r * 0.3, r * 0.4, 0, 7); g.fill();
+      }
+    } else if (t === 'r') {
+      g.fillStyle = '#9d988c'; g.strokeStyle = 'rgba(43,38,34,.7)'; g.lineWidth = 1.2;
+      for (let k = 0; k < 2; k++) { const px = X + P * (0.3 + 0.4 * k), py = Y + P * (0.45 + 0.2 * hh(x, y, k)), r = P * 0.2; g.beginPath(); g.moveTo(px - r, py + r * 0.6); g.lineTo(px - r * 0.5, py - r * 0.7); g.lineTo(px + r * 0.4, py - r * 0.8); g.lineTo(px + r, py + r * 0.6); g.closePath(); g.fill(); g.stroke(); }
+    } else if (t === 'c') { g.fillStyle = 'rgba(140,80,40,.35)'; for (let k = 0; k < 5; k++) { g.beginPath(); g.arc(X + hh(x, y, k) * P, Y + hh(y, x, k + 7) * P, 1.6, 0, 7); g.fill(); } }
+  }
+  const hx = CASTLE.x * P, hy = CASTLE.y * P, hw = CASTLE.w * P, hh2 = CASTLE.h * P;
+  g.strokeStyle = 'rgba(110,90,50,.5)'; g.lineWidth = 1.5;
+  for (let k = 0; k < 3; k++) { const m = 4 + k * 12; g.beginPath(); g.roundRect ? g.roundRect(hx + m, hy + m, hw - 2 * m, hh2 - 2 * m, 18 - k * 4) : g.rect(hx + m, hy + m, hw - 2 * m, hh2 - 2 * m); g.stroke(); }
+  g.strokeStyle = 'rgba(43,38,34,.6)'; g.lineWidth = 2; g.strokeRect(1, 1, W * P - 2, H * P - 2);
+  terrainC = c; terrainDirty = false;
+}
+function drawRoads(x0, y0, x1, y1, s) {
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    const i = idx(x, y); if (!road[i]) continue;
+    const X = sx(x), Y = sy(y), br = TER[i] === 'w';
+    ctx.fillStyle = br ? '#a67c50' : '#d7c08b'; ctx.fillRect(X, Y, s + 0.6, s + 0.6);
+    ctx.strokeStyle = br ? 'rgba(70,45,25,.8)' : 'rgba(120,95,55,.6)'; ctx.lineWidth = Math.max(1, s * 0.05);
+    const nb = (dx, dy) => inb(x + dx, y + dy) && road[idx(x + dx, y + dy)];
+    ctx.beginPath();
+    if (!nb(0, -1)) { ctx.moveTo(X, Y + 0.5); ctx.lineTo(X + s, Y + 0.5); }
+    if (!nb(0, 1)) { ctx.moveTo(X, Y + s - 0.5); ctx.lineTo(X + s, Y + s - 0.5); }
+    if (!nb(-1, 0)) { ctx.moveTo(X + 0.5, Y); ctx.lineTo(X + 0.5, Y + s); }
+    if (!nb(1, 0)) { ctx.moveTo(X + s - 0.5, Y); ctx.lineTo(X + s - 0.5, Y + s); }
+    ctx.stroke();
+    if (br) { ctx.strokeStyle = 'rgba(70,45,25,.5)'; ctx.lineWidth = 1; for (let k = 1; k < 4; k++) { const v = nb(0, -1) || nb(0, 1); ctx.beginPath(); if (v) { ctx.moveTo(X, Y + k * s / 4); ctx.lineTo(X + s, Y + k * s / 4); } else { ctx.moveTo(X + k * s / 4, Y); ctx.lineTo(X + k * s / 4, Y + s); } ctx.stroke(); } }
+  }
+}
+function roofRect(x, y, w, h, col, s, lines) {
+  ctx.fillStyle = 'rgba(60,45,30,.22)'; ctx.fillRect(x + s * 0.07, y + s * 0.09, w, h);
+  ctx.fillStyle = col[0]; ctx.fillRect(x, y, w, h);
+  if (lines) { ctx.strokeStyle = 'rgba(0,0,0,.15)'; ctx.lineWidth = 1; for (let yy = y + s * 0.14; yy < y + h; yy += s * 0.14) { ctx.beginPath(); ctx.moveTo(x, yy); ctx.lineTo(x + w, yy); ctx.stroke(); } }
+  ctx.strokeStyle = col[1]; ctx.lineWidth = Math.max(1, s * 0.06);
+  ctx.beginPath();
+  if (w >= h) { const r = h / 2; ctx.moveTo(x, y); ctx.lineTo(x + r, y + r); ctx.lineTo(x + w - r, y + r); ctx.lineTo(x + w, y); ctx.moveTo(x, y + h); ctx.lineTo(x + r, y + r); ctx.moveTo(x + w - r, y + r); ctx.lineTo(x + w, y + h); }
+  else { const r = w / 2; ctx.moveTo(x, y); ctx.lineTo(x + r, y + r); ctx.lineTo(x + r, y + h - r); ctx.lineTo(x, y + h); ctx.moveTo(x + w, y); ctx.lineTo(x + r, y + r); ctx.moveTo(x + r, y + h - r); ctx.lineTo(x + w, y + h); }
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(43,38,34,.8)'; ctx.lineWidth = 1; ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+}
+function label(text, cx, cy, s, small) {
+  if (s < 17) return;
+  const fs = clamp(s * (small ? 0.3 : 0.36), 9, 15);
+  ctx.font = `800 ${fs}px "Shippori Mincho B1","Hiragino Mincho ProN",serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const w = ctx.measureText(text).width + fs * 0.7, h = fs * 1.35;
+  ctx.fillStyle = 'rgba(250,246,235,.92)'; ctx.fillRect(cx - w / 2, cy - h / 2, w, h);
+  ctx.strokeStyle = 'rgba(43,38,34,.7)'; ctx.lineWidth = 1; ctx.strokeRect(cx - w / 2 + 0.5, cy - h / 2 + 0.5, w - 1, h - 1);
+  ctx.fillStyle = '#2b2622'; ctx.fillText(text, cx, cy + fs * 0.04);
+}
+function drawBuilding(b, t, s, night) {
+  const x = sx(b.x), y = sy(b.y), w = b.w * s, h = b.h * s;
+  if (b.k === 'castle') { drawCastle(b, x, y, w, h, s, t); return; }
+  const d = DEF[b.k];
+  if (!b.done) {
+    ctx.fillStyle = 'rgba(178,60,42,.07)'; ctx.fillRect(x + 2, y + 2, w - 4, h - 4);
+    ctx.save(); ctx.beginPath(); ctx.rect(x + 2, y + 2, w - 4, h - 4); ctx.clip();
+    ctx.strokeStyle = 'rgba(120,85,50,.45)'; ctx.lineWidth = 1;
+    for (let k = -h; k < w; k += s * 0.35) { ctx.beginPath(); ctx.moveTo(x + k, y + h); ctx.lineTo(x + k + h, y); ctx.stroke(); }
+    ctx.restore();
+    ctx.setLineDash([4, 3]); ctx.strokeStyle = '#842a1c'; ctx.lineWidth = 1.3; ctx.strokeRect(x + 2.5, y + 2.5, w - 5, h - 5); ctx.setLineDash([]);
+    const f = b.prog / Math.max(1, b.work), m = matFrac(b);
+    ctx.fillStyle = 'rgba(43,38,34,.25)'; ctx.fillRect(x + 4, y + h - 8, w - 8, 4);
+    ctx.fillStyle = '#c9965c'; ctx.fillRect(x + 4, y + h - 8, (w - 8) * m, 4);
+    ctx.fillStyle = '#b23c2a'; ctx.fillRect(x + 4, y + h - 8, (w - 8) * f, 4);
+    label(d.name, x + w / 2, y + h / 2 - 3, s, true);
+    return;
+  }
+  const col = ROOF[d.roof];
+  if (d.roof === 'field') {
+    const se = season(); const fc = ['#b7cd85', '#8fb35a', '#d4b75a', '#cbbd99'][se];
+    ctx.fillStyle = fc; ctx.fillRect(x + 1, y + 1, w - 2, h - 2);
+    ctx.strokeStyle = 'rgba(90,80,40,.5)'; ctx.lineWidth = 1;
+    for (let k = 1; k < b.w * 2; k++) { ctx.beginPath(); ctx.moveTo(x + k * w / (b.w * 2), y + 2); ctx.lineTo(x + k * w / (b.w * 2), y + h - 2); ctx.stroke(); }
+    ctx.strokeStyle = 'rgba(43,38,34,.7)'; ctx.strokeRect(x + 1.5, y + 1.5, w - 3, h - 3);
+    if (se !== 3 && s > 16) { ctx.fillStyle = 'rgba(60,80,30,.35)'; for (let k = 0; k < 9; k++) { const px = x + (0.15 + (k % 3) * 0.35) * w, py = y + (0.15 + Math.floor(k / 3) * 0.35) * h; ctx.fillRect(px, py, 2, 2); } }
+  } else if (d.roof === 'yard') {
+    ctx.fillStyle = col[0]; ctx.fillRect(x + 1, y + 1, w - 2, h - 2);
+    ctx.fillStyle = b.k === 'quarry' ? '#9d988c' : '#b36b3a';
+    for (let k = 0; k < 4; k++) { ctx.beginPath(); ctx.arc(x + w * (0.3 + 0.4 * (k % 2)), y + h * (0.35 + 0.35 * Math.floor(k / 2)), s * 0.16, 0, 7); ctx.fill(); }
+    roofRect(x + w * 0.55, y + h * 0.08, w * 0.38, h * 0.32, ROOF.ita, s, false);
+    ctx.strokeStyle = 'rgba(43,38,34,.6)'; ctx.lineWidth = 1; ctx.strokeRect(x + 1.5, y + 1.5, w - 3, h - 3);
+  } else if (d.roof === 'market') {
+    ctx.fillStyle = '#ebe1c8'; ctx.fillRect(x + 1, y + 1, w - 2, h - 2);
+    for (let k = 0; k < 4; k++) { const px = x + w * (0.08 + (k % 2) * 0.48), py = y + h * (0.1 + Math.floor(k / 2) * 0.48); roofRect(px, py, w * 0.4, h * 0.3, ROOF.ita, s, false); ctx.fillStyle = '#b23c2a'; ctx.fillRect(px, py + h * 0.3, w * 0.4, h * 0.07); }
+  } else {
+    ctx.fillStyle = '#e9dfc6'; ctx.fillRect(x + 1, y + 1, w - 2, h - 2);
+    const m = s * (d.roof === 'temple' ? 0.08 : 0.14);
+    if (d.roof === 'kura') {
+      ctx.fillStyle = 'rgba(60,45,30,.22)'; ctx.fillRect(x + m + s * 0.07, y + m + s * 0.09, w - 2 * m, h - 2 * m);
+      ctx.fillStyle = col[0]; ctx.fillRect(x + m, y + m, w - 2 * m, h - 2 * m);
+      ctx.fillStyle = col[1]; ctx.fillRect(x + m, y + m, w - 2 * m, (h - 2 * m) * 0.45);
+      ctx.strokeStyle = 'rgba(43,38,34,.85)'; ctx.lineWidth = 1; ctx.strokeRect(x + m + 0.5, y + m + 0.5, w - 2 * m - 1, h - 2 * m - 1);
+    } else {
+      roofRect(x + m, y + m, w - 2 * m, h - 2 * m, col, s, d.roof === 'kawara' || d.roof === 'temple');
+    }
+    if (d.roof === 'shrine' && s > 12) {
+      ctx.strokeStyle = '#b23c2a'; ctx.lineWidth = Math.max(2, s * 0.09);
+      const tx = x + w / 2, ty = y + h - s * 0.2;
+      ctx.beginPath(); ctx.moveTo(tx - s * 0.32, ty - s * 0.12); ctx.lineTo(tx + s * 0.32, ty - s * 0.12); ctx.moveTo(tx - s * 0.2, ty - s * 0.12); ctx.lineTo(tx - s * 0.2, ty + s * 0.12); ctx.moveTo(tx + s * 0.2, ty - s * 0.12); ctx.lineTo(tx + s * 0.2, ty + s * 0.12); ctx.stroke();
+    }
+    if (d.roof === 'kiln' && b._pres && isWork()) {
+      for (let k = 0; k < 3; k++) { const ph = ((t / 900 + k / 3) % 1); ctx.fillStyle = `rgba(120,110,100,${0.35 * (1 - ph)})`; ctx.beginPath(); ctx.arc(x + w * 0.75 + ph * s * 0.3, y + h * 0.25 - ph * s * 0.9, s * (0.1 + ph * 0.18), 0, 7); ctx.fill(); }
+    }
+  }
+  if (night && resOf(b) && residents(b)) { ctx.fillStyle = 'rgba(255,190,90,.9)'; for (let k = 0; k < 2; k++) ctx.fillRect(x + w * (0.3 + k * 0.32), y + h * 0.62, Math.max(2, s * 0.1), Math.max(2, s * 0.1)); }
+  label(d.name.length > 3 && s < 30 ? d.ic : d.name, x + w / 2, y + h / 2, s, b.w === 1);
+  const warn = buildingWarn(b);
+  if (warn && s >= 14) {
+    const r = Math.max(6, s * 0.2), cx = x + w - r * 0.6, cy = y + r * 0.6;
+    ctx.fillStyle = warn === '冬' ? '#6b7c8f' : '#b23c2a'; ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#fbf4e6'; ctx.lineWidth = 1.2; ctx.stroke();
+    ctx.fillStyle = '#fbf4e6'; ctx.font = `900 ${Math.round(r * 1.15)}px "Zen Kaku Gothic New",sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(warn, cx, cy + 0.5);
+  }
+}
+function buildingWarn(b) {
+  if (!b.done || b.k === 'castle') return null;
+  if (!b._ent || !b._ent.length) return '道';
+  if (b.stopped) return '止';
+  if (jobsOf(b) && b.workers.length < jobsOf(b)) return '人';
+  if (resOf(b) && b.fed === false) return '飢';
+  return b._warn || null;
+}
+function drawCastle(b, x, y, w, h, s, t) {
+  const st = S.castle;
+  if (!b.done) {
+    ctx.setLineDash([5, 4]); ctx.strokeStyle = '#842a1c'; ctx.lineWidth = 1.5; ctx.strokeRect(x + 3, y + 3, w - 6, h - 6); ctx.setLineDash([]);
+    const f = b.prog / Math.max(1, b.work), m = matFrac(b);
+    ctx.fillStyle = 'rgba(43,38,34,.25)'; ctx.fillRect(x + 8, y + h - 12, w - 16, 5);
+    ctx.fillStyle = '#c9965c'; ctx.fillRect(x + 8, y + h - 12, (w - 16) * m, 5);
+    ctx.fillStyle = '#b23c2a'; ctx.fillRect(x + 8, y + h - 12, (w - 16) * f, 5);
+  }
+  if (st >= 1) {
+    const m = s * 0.25;
+    ctx.fillStyle = 'rgba(60,45,30,.25)'; ctx.fillRect(x + m + 3, y + m + 4, w - 2 * m, h - 2 * m);
+    ctx.fillStyle = '#a19a8c'; ctx.fillRect(x + m, y + m, w - 2 * m, h - 2 * m);
+    ctx.fillStyle = '#cbc3b0'; ctx.fillRect(x + m + s * 0.3, y + m + s * 0.3, w - 2 * m - s * 0.6, h - 2 * m - s * 0.6);
+    ctx.strokeStyle = 'rgba(43,38,34,.45)'; ctx.lineWidth = 1;
+    for (let k = 0; k < 10; k++) { ctx.beginPath(); ctx.moveTo(x + m + k * (w - 2 * m) / 10, y + m); ctx.lineTo(x + m + k * (w - 2 * m) / 10 + s * 0.15, y + m + s * 0.3); ctx.stroke(); }
+    ctx.strokeStyle = 'rgba(43,38,34,.85)'; ctx.strokeRect(x + m + 0.5, y + m + 0.5, w - 2 * m - 1, h - 2 * m - 1);
+  }
+  if (st >= 2) roofRect(x + w * 0.2, y + h * 0.48, w * 0.6, h * 0.3, ROOF.kawara, s, true);
+  if (st >= 3) {
+    const cx = x + w * 0.5, cy = y + h * 0.36;
+    ctx.fillStyle = 'rgba(40,30,20,.3)'; ctx.fillRect(cx - s * 0.85 + 5, cy - s * 0.65 + 7, s * 1.7, s * 1.3);
+    const tiers = [[1.7, 1.3], [1.25, 0.95], [0.8, 0.6]];
+    tiers.forEach(([tw, th], i) => {
+      ctx.fillStyle = '#f5f1e6'; ctx.fillRect(cx - tw * s / 2, cy - th * s / 2 - i * s * 0.12, tw * s, th * s);
+      roofRect(cx - tw * s / 2 - 2, cy - th * s / 2 - i * s * 0.12 - 2, tw * s + 4, th * s * 0.55, ROOF.kawara, s, true);
+    });
+    ctx.fillStyle = '#d4a52a'; ctx.beginPath(); ctx.arc(cx - s * 0.25, cy - s * 0.42, s * 0.06, 0, 7); ctx.arc(cx + s * 0.25, cy - s * 0.42, s * 0.06, 0, 7); ctx.fill();
+  }
+  label(st >= 3 ? '青葉城' : st >= 1 ? '城' : b.done ? '城山' : STAGES[b.stage].name + '普請', x + w / 2, y + h - s * 0.45, s, false);
+}
+function drawAgents(s) {
+  const r = Math.max(1.7, s * 0.09);
+  for (const c of S.c) {
+    if (!c.path) continue;
+    const X = sx(c.x), Y = sy(c.y);
+    if (X < -10 || Y < -10 || X > CW + 10 || Y > CH + 10) continue;
+    const role = c.task ? (c.task.type === 'build' ? 'b' : 'p') : c.st === 'arrive' ? 'a' : 'c';
+    ctx.fillStyle = role === 'b' ? '#b23c2a' : role === 'p' ? '#6b4423' : role === 'a' ? '#7f776b' : '#2f4f6f';
+    ctx.beginPath(); ctx.arc(X, Y, r, 0, 7); ctx.fill();
+    if (c.carry) { const q = r * 1.5; ctx.fillStyle = GOODS[c.carry.g].col; ctx.fillRect(X + r * 0.4, Y - r * 2.2, q, q); ctx.strokeStyle = 'rgba(43,38,34,.8)'; ctx.lineWidth = 0.8; ctx.strokeRect(X + r * 0.4, Y - r * 2.2, q, q); }
+  }
+}
+function drawOverlay(s, t) {
+  const circle = (b, r, col) => { const [cx, cy] = center(b); ctx.strokeStyle = col; ctx.fillStyle = col.replace('.9', '.08'); ctx.lineWidth = 2; ctx.setLineDash([6, 4]); ctx.beginPath(); ctx.arc(sx(cx), sy(cy), r * s, 0, 7); ctx.fill(); ctx.stroke(); ctx.setLineDash([]); };
+  const rangeOf = (k) => (DEF[k] ? DEF[k].feedR || DEF[k].svcR || (DEF[k].need === 'forest' ? 3 : 0) : 0);
+  if (mode && mode.type === 'build') {
+    const d = DEF[mode.k], fake = { k: mode.k, x: mode.x, y: mode.y, w: d.w, h: d.h };
+    const r = canPlace(mode.k, mode.x, mode.y);
+    const rg = rangeOf(mode.k); if (rg) circle(fake, rg, 'rgba(47,79,111,.9)');
+    if (mode.k === 'house' || mode.k === 'machiya') for (const b of S.b) if (b.done && (b.k === 'market' || b.k === 'warehouse')) circle(b, DEF[b.k].feedR, 'rgba(88,115,58,.9)');
+    ctx.fillStyle = r.ok ? 'rgba(88,115,58,.35)' : 'rgba(178,60,42,.35)'; ctx.fillRect(sx(mode.x), sy(mode.y), d.w * s, d.h * s);
+    ctx.strokeStyle = r.ok ? '#3e5523' : '#842a1c'; ctx.lineWidth = 2; ctx.strokeRect(sx(mode.x) + 1, sy(mode.y) + 1, d.w * s - 2, d.h * s - 2);
+    label(d.name, sx(mode.x + d.w / 2), sy(mode.y + d.h / 2), s, d.w === 1);
+  }
+  if (mode && mode.type === 'road') {
+    if (mode.preview) for (const i of mode.preview.tiles) { ctx.fillStyle = mode.preview.ok ? 'rgba(215,192,139,.85)' : 'rgba(178,60,42,.45)'; ctx.fillRect(sx(i % W), sy((i / W) | 0), s, s); ctx.strokeStyle = 'rgba(43,38,34,.5)'; ctx.strokeRect(sx(i % W) + 0.5, sy((i / W) | 0) + 0.5, s - 1, s - 1); }
+    if (mode.a !== null) { const pulse = 0.5 + 0.5 * Math.sin(t / 200); ctx.strokeStyle = `rgba(178,60,42,${0.5 + pulse * 0.5})`; ctx.lineWidth = 3; ctx.strokeRect(sx(mode.a % W) + 1.5, sy((mode.a / W) | 0) + 1.5, s - 3, s - 3); }
+  }
+  if (mode && mode.type === 'remove' && mode.target) {
+    const tg = mode.target; ctx.strokeStyle = '#b23c2a'; ctx.lineWidth = 3;
+    if (tg.b) ctx.strokeRect(sx(tg.b.x) + 1.5, sy(tg.b.y) + 1.5, tg.b.w * s - 3, tg.b.h * s - 3); else ctx.strokeRect(sx(tg.i % W) + 1.5, sy((tg.i / W) | 0) + 1.5, s - 3, s - 3);
+  }
+  if (selected) {
+    const b = B(selected); if (b) {
+      ctx.strokeStyle = '#2f4f6f'; ctx.lineWidth = 2.5; ctx.strokeRect(sx(b.x) - 1, sy(b.y) - 1, b.w * s + 2, b.h * s + 2);
+      const rg = b.k !== 'castle' ? rangeOf(b.k) : 0; if (rg) circle(b, rg, 'rgba(47,79,111,.9)');
+    }
+  }
+}
+function draw(t) {
+  if (!S || CW === 0) return;
+  if (terrainDirty || !terrainC) buildTerrain();
+  const s = tsz();
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.fillStyle = '#cdbf9c'; ctx.fillRect(0, 0, CW, CH);
+  ctx.imageSmoothingEnabled = true;
+  ctx.drawImage(terrainC, sx(0), sy(0), W * s, H * s);
+  const x0 = Math.max(0, Math.floor(wx(0))), y0 = Math.max(0, Math.floor(wy(0))), x1 = Math.min(W - 1, Math.ceil(wx(CW))), y1 = Math.min(H - 1, Math.ceil(wy(CH)));
+  drawRoads(x0, y0, x1, y1, s);
+  const h = hourOf(), night = h < 5 || h >= 19;
+  if (s >= 14) { ctx.fillStyle = 'rgba(43,38,34,.55)'; ctx.font = `700 ${clamp(s * 0.34, 9, 13)}px "Zen Kaku Gothic New",sans-serif`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText('← 街道', sx(0.15), sy(19.4)); }
+  for (const b of S.b) { if (b.x + b.w < x0 - 1 || b.x > x1 + 1 || b.y + b.h < y0 - 1 || b.y > y1 + 1) continue; drawBuilding(b, t, s, night); }
+  if (!S.b.some((b) => b.k === 'castle')) label('城山', sx(CASTLE.x + CASTLE.w / 2), sy(CASTLE.y + CASTLE.h / 2), s, false);
+  drawAgents(s);
+  let dark = 0; if (h >= 18 && h < 20) dark = (h - 18) / 2; else if (h >= 20 || h < 4) dark = 1; else if (h >= 4 && h < 6) dark = 1 - (h - 4) / 2;
+  if (dark > 0) { ctx.fillStyle = `rgba(20,28,55,${0.32 * dark})`; ctx.fillRect(0, 0, CW, CH); }
+  drawOverlay(s, t);
+}
+
+/* ======================= UI ======================= */
+let toastT = 0;
+function toast(msg) { const el = $('toast'); el.textContent = msg; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 2600); }
+function dateStr() { const d = dayIdx(); return `${Math.floor(d / 20) + 1}年目 ${SEASONS[season()]}${(d % 5) + 1}日`; }
+function timeStr() { const h = hourOf(); const k = KOKU[Math.floor(((Math.floor(h) + 1) % 24) / 2)]; return `${k}の刻（${Math.floor(h)}時）${isWork() ? '・仕事中' : h >= 18 || h < 5 ? '・夜' : ''}`; }
+const uiCache = {};
+function setText(id, v) { if (uiCache[id] === v) return; uiCache[id] = v; $(id).textContent = v; }
+function renderTop() {
+  setText('dDate', dateStr()); setText('dTime', timeStr());
+  setText('sMoney', fmt(S.money)); setText('sPop', String(S.c.length)); setText('sHappy', String(S.happy));
+  $('sHappy').classList.toggle('bad', S.happy < 40);
+  const fd = Math.floor(foodDays()); setText('sFood', `${fd > 99 ? '99+' : fd}日`); $('sFood').classList.toggle('bad', fd < 6);
+  const ch = CHAPTERS[S.chapter];
+  if (ch) {
+    const done = ch.goals.filter((g) => g.ok()).length, next = ch.goals.find((g) => !g.ok());
+    setText('gCh', ch.title.split('　')[0]); setText('gT', next ? next.t : '達成！タップして次へ'); setText('gN', `${done}/${ch.goals.length}`);
+  } else { setText('gCh', '自由普請'); setText('gT', '城下町を思うままに広げよう'); setText('gN', ''); }
+  [...$('speed').children].forEach((b) => b.classList.toggle('on', Number(b.dataset.s) === (paused ? 0 : SET.speed) && !(paused && Number(b.dataset.s) !== 0)));
+}
+function costStr(c, money) { const p = Object.keys(c).filter((g) => c[g]).map((g) => `${GOODS[g].name}${c[g]}`); if (money) p.push(`${money}両`); return p.join('・'); }
+let sheetTimer = 0, sheetFn = null, sheetPause = false;
+function openSheet(html, { refresh = null, pauseSim = false, short = true, onClose = null } = {}) {
+  const sh = $('sheet'); sh.innerHTML = html; sh.className = 'sheet' + (short ? ' short' : '');
+  $('sheetWrap').hidden = false; sheetFn = refresh; sheetPause = pauseSim; sheetOnClose = onClose;
+  clearInterval(sheetTimer); if (refresh) sheetTimer = setInterval(() => { if (!$('sheetWrap').hidden && sheetFn && performance.now() - sheetTouch > 900) sheetFn(); }, 700);
+}
+let sheetOnClose = null, sheetTouch = 0;
+$('sheet').addEventListener('pointerdown', () => { sheetTouch = performance.now(); });
+function closeSheet() { if ($('sheetWrap').hidden) return; $('sheetWrap').hidden = true; clearInterval(sheetTimer); sheetFn = null; sheetPause = false; selected = null; const f = sheetOnClose; sheetOnClose = null; if (f) f(); }
+$('sheetWrap').addEventListener('click', (e) => { if (e.target === $('sheetWrap') && !$('sheet').dataset.lock) closeSheet(); });
+const head = (ic, col, kick, title) => `<div class="sh-head"><div class="sh-icon" style="background:${col}">${ic}</div><div><div class="sh-kick">${kick}</div><div class="sh-title">${title}</div></div><button class="sh-x" type="button" data-act="close" aria-label="閉じる">×</button></div>`;
+
+/* --- story --- */
+let storyQueue = [], storyDone = null;
+function playStory(lines, after) {
+  storyQueue = lines.slice(); storyDone = after; showStoryLine();
+}
+function showStoryLine() {
+  const ln = storyQueue.shift();
+  if (!ln) { $('sheet').dataset.lock = ''; closeSheet(); const f = storyDone; storyDone = null; if (f) f(); return; }
+  const f = FACES[ln[0]];
+  openSheet(`<div class="talk"><div class="face" style="color:${f.col};border-color:${f.col}">${f.ch}</div><div><div class="who">${f.name}</div><p>${ln[1]}</p></div></div>
+    <div class="acts"><button class="btn btn-shu" type="button" data-act="story">${storyQueue.length ? 'つぎへ' : 'わかった'}</button></div>`, { pauseSim: true });
+  $('sheet').dataset.lock = '1'; sfx.page();
+}
+function chapterIntro() {
+  const ch = CHAPTERS[S.chapter]; if (!ch) return;
+  playStory([...ch.intro], () => { S.seen['ch' + S.chapter] = 1; save(); openGoals(); });
+}
+function checkChapter() {
+  const ch = CHAPTERS[S.chapter]; if (!ch || !$('sheetWrap').hidden || mode) return;
+  if (!S.seen['ch' + S.chapter]) { chapterIntro(); return; }
+  if (ch.goals.every((g) => g.ok())) {
+    playStory([...ch.outro], () => {
+      S.money += ch.reward; sfx.bell();
+      const unlock = ch.unlock;
+      S.chapter++; save();
+      toast(`${ch.title.split('　')[0]} 達成！ ${ch.reward}両を賜った${unlock ? '。' + unlock + 'を建てられるようになった' : ''}`);
+      if (S.chapter >= CHAPTERS.length) { openSheet(`${head('完', '#b23c2a', '終章', '城下町の完成')}<p class="desc">天守がそびえ、町には人と荷が行き交う。殿の願いは果たされた。ここからは思うままに町を広げられます。</p>
+        <div class="rows"><div><span>人口</span><b>${S.c.length}人</b></div><div><span>かかった月日</span><b>${dateStr()}</b></div><div><span>所持金</span><b>${fmt(S.money)}両</b></div></div>
+        <div class="acts"><button class="btn btn-shu" type="button" data-act="close">町へ戻る</button></div>`, { pauseSim: true }); }
+    });
+  }
+}
+function openGoals() {
+  const ch = CHAPTERS[S.chapter];
+  if (!ch) { openSheet(`${head('自', '#58733a', '自由普請', '城下町を思うままに')}<p class="desc">物語はおしまいです。人口や満足度をどこまで高められるか挑戦してください。</p>`); return; }
+  const render = () => `${head('帖', '#b23c2a', ch.title.split('　')[0], ch.title.split('　')[1])}
+    <ul class="goals">${ch.goals.map((g) => `<li class="${g.ok() ? 'ok' : ''}"><i>${g.ok() ? '✓' : ''}</i><span>${g.t}</span></li>`).join('')}</ul>
+    <p class="note">達成すると ${ch.reward}両${ch.unlock ? `。${ch.unlock}が建てられるようになります` : ''}。</p>
+    <div class="acts"><button class="btn" type="button" data-act="replay">話をもう一度聞く</button><button class="btn btn-shu" type="button" data-act="close">閉じる</button></div>`;
+  openSheet(render(), { refresh: () => { $('sheet').innerHTML = render(); } });
+}
+
+/* --- build menu --- */
+let buildCat = '住まい';
+function openBuildMenu() {
+  const render = () => {
+    const list = Object.keys(DEF).filter((k) => DEF[k].cat === buildCat);
+    return `${head('建', '#7a5230', '普請', '何を建てますか')}
+      <div class="cats">${CATS.map((c) => `<button type="button" data-cat="${c}" class="${c === buildCat ? 'on' : ''}">${c}</button>`).join('')}</div>
+      <div class="cards">${list.map((k) => { const d = DEF[k], lock = S.chapter < d.unlock; return `<button class="card ${lock ? 'locked' : ''}" type="button" data-build="${k}">
+        <span class="sh-icon" style="background:${ROOF[d.roof][d.roof === 'kura' ? 1 : 0]};width:36px;height:36px;font-size:17px">${d.ic}</span>
+        <span class="c-main"><b>${d.name}${d.w}×${d.h}</b><span>${lock ? `${CHAPTERS[d.unlock - 1] ? CHAPTERS[d.unlock - 1].title.split('　')[0] + 'の達成で解放' : ''}` : d.desc}</span></span>
+        <span class="c-cost">${costStr(d.cost)}<br>${d.money}両${d.jobs ? `<br>働き手${d.jobs}` : ''}${d.res ? `<br>住人${d.res}` : ''}</span></button>`; }).join('')}</div>`;
+  };
+  openSheet(render(), { short: true });
+  $('sheet').dataset.render = 'build';
+}
+function startBuild(k) {
+  closeSheet();
+  const d = DEF[k];
+  mode = { type: 'build', k, x: Math.round(cam.x - d.w / 2), y: Math.round(cam.y - d.h / 2) };
+  setTool('tBuild'); updatePlacebar();
+}
+function updatePlacebar() {
+  const pb = $('placebar');
+  if (!mode) { pb.hidden = true; return; }
+  pb.hidden = false;
+  const ok = $('pbOk'), T = $('pbT'), Sx = $('pbS');
+  Sx.className = '';
+  if (mode.type === 'build') {
+    const d = DEF[mode.k], r = canPlace(mode.k, mode.x, mode.y);
+    T.textContent = `${d.name}：${costStr(d.cost, d.money)}`;
+    Sx.textContent = r.ok ? (r.warn || '地図をタップして場所を動かし、決定を押す') : r.why; if (!r.ok || r.warn) Sx.className = 'bad';
+    ok.disabled = !r.ok; ok.textContent = '建てる';
+  } else if (mode.type === 'road') {
+    if (mode.a === null) { T.textContent = '道を引く'; Sx.textContent = '始まりのマスをタップ'; ok.disabled = true; }
+    else if (!mode.preview) { T.textContent = '道を引く'; Sx.textContent = '終わりのマスをタップ（まっすぐかL字）'; ok.disabled = true; }
+    else { const c = roadCost(mode.preview.tiles); T.textContent = `道 ${mode.preview.tiles.filter((i) => !road[i]).length}マス${c.br ? `（橋${c.br}）` : ''}：${c.m}両`; Sx.textContent = mode.preview.ok ? (S.money >= c.m ? '決定で道を敷く' : 'お金が足りません') : '建物・岩場・城山は通れません'; if (!mode.preview.ok || S.money < c.m) Sx.className = 'bad'; ok.disabled = !mode.preview.ok || S.money < c.m; }
+    ok.textContent = '敷く';
+  } else if (mode.type === 'remove') {
+    const tg = mode.target;
+    T.textContent = '撤去';
+    if (!tg) { Sx.textContent = '取りこわす建物か道をタップ'; ok.disabled = true; }
+    else if (tg.b) { const R = resOf(tg.b) ? residents(tg.b) : 0; Sx.textContent = `${tg.b.k === 'castle' ? STAGES[tg.b.stage].name + 'の普請' : DEF[tg.b.k].name}${tg.b.done ? '' : '（普請中）'}を取りこわす${R ? `。住人${R}人は町を去ります` : ''}`; Sx.className = 'bad'; ok.disabled = false; }
+    else { Sx.textContent = tg.i === GATE ? '街道の入口は取りこわせません' : '道を1マス取りこわす'; ok.disabled = tg.i === GATE; }
+    ok.textContent = '撤去';
+  }
+}
+function setTool(id) { for (const t of ['tRoad', 'tBuild', 'tRemove']) $(t).classList.toggle('on', t === id); }
+function exitMode() { mode = null; setTool(null); updatePlacebar(); }
+
+/* --- building info --- */
+function stockRows(b, keys) {
+  return keys.map((g) => `<div><span>${GOODS[g].name}</span><b>${fmt(g0(b.store, g))}${g0(b.inbound, g) ? `<span class="sub">（運搬中${fmt(b.inbound[g])}）</span>` : ''}</b></div>`).join('');
+}
+function infoHtml(b) {
+  if (b.k === 'castle') {
+    const st = STAGES[b.done ? S.castle - 1 : b.stage];
+    if (!b.done) return `${head('城', '#b23c2a', '築城', `${st.name}の普請`)}<p class="desc">${st.desc}</p>${siteRows(b)}${prioRow(b)}
+      <div class="acts"><button class="btn" type="button" data-act="close">閉じる</button></div>`;
+    const next = STAGES[S.castle];
+    return `${head('城', '#b23c2a', '城山', S.castle >= 3 ? '青葉城' : `城（${STAGES[S.castle - 1].name}まで完成）`)}
+      <p class="desc">${S.castle >= 3 ? '城下を見下ろす天守。町人の誇りとなっている。' : '築城はまだ途中。'}町人の満足度 +${S.castle * 4}</p>
+      ${next ? `<div class="rows"><div><span>次の普請</span><b>${next.name}</b></div><div><span>材料</span><b>${costStr(next.cost, next.money)}</b></div></div>` : ''}
+      <div class="acts">${next ? `<button class="btn btn-shu" type="button" data-act="castle" ${S.chapter < next.chapter ? 'disabled' : ''}>${next.name}の普請を始める${S.chapter < next.chapter ? '<small>物語を進めると解放</small>' : ''}</button>` : ''}<button class="btn" type="button" data-act="close">閉じる</button></div>`;
+  }
+  const d = DEF[b.k];
+  const ic = `<div class="sh-icon" style="background:${ROOF[d.roof][d.roof === 'kura' ? 1 : 0]}">${d.ic}</div>`;
+  let h = `<div class="sh-head">${ic}<div><div class="sh-kick">${b.done ? d.cat : '普請中'}</div><div class="sh-title">${d.name}</div></div><button class="sh-x" type="button" data-act="close" aria-label="閉じる">×</button></div>`;
+  if (!b.done) return h + `<p class="desc">${d.desc}</p>${siteRows(b)}${prioRow(b)}${b._ent.length ? '' : '<p class="status warn">道に接していないので、材料も大工も届きません</p>'}
+    <div class="acts"><button class="btn" type="button" data-act="demolish">取りやめる</button><button class="btn btn-shu" type="button" data-act="close">閉じる</button></div>`;
+  const w = buildingWarn(b);
+  const WARN = { '道': '道に接していません。道をつないでください', '止': '停止中です', '人': `働き手が足りません（${b.workers.length}/${jobsOf(b)}人）。長屋を建てて人を増やすか、優先度を上げてください`, '飢': '食べ物が届いていません。市（9マス）か蔵（6マス）の範囲に入れてください', '冬': '冬のあいだは休んでいます', '材': '材料が足りず止まっています', '満': '作った品がたまって止まっています。人足の手が足りません。蔵を建てると人足が増えます' };
+  h += `<p class="status ${w ? 'warn' : ''}">${w ? WARN[w] : '問題なく動いています'}</p><p class="desc">${d.desc}</p>`;
+  const rows = [];
+  if (jobsOf(b)) rows.push(`<div><span>${d.role === 'porter' ? '人足' : d.role === 'builder' ? '大工' : '働き手'}</span><b>${b.workers.length} / ${jobsOf(b)}人（いま${b._pres || 0}人）</b></div>`);
+  if (d.out) {
+    const per = d.rate * jobsOf(b) * 12.5 * eff() * (b._res ?? 1) * (d.season ? d.season[season()] : 1);
+    for (const g in d.out) rows.push(`<div><span>${GOODS[g].name}の生産</span><b>1日およそ${fmt(per * d.out[g])}</b></div>`);
+    if (d.need && d.need !== 'water3') rows.push(`<div><span>${{ forest: '森', rock: '岩場', clay: '粘土', water1: '水辺' }[d.need]}の豊かさ</span><b>${Math.round((b._res ?? 1) * 100)}%</b></div>`);
+  }
+  if (d.in) rows.push(`<div><span>必要な材料</span><b>${Object.keys(d.in).map((g) => `${GOODS[g].name}${d.in[g]}`).join('・')}${d.out ? ` → ${Object.keys(d.out).map((g) => `${GOODS[g].name}${d.out[g]}`).join('・')}` : '（燃料）'}</b></div>`);
+  if (resOf(b)) {
+    const R = residents(b);
+    rows.push(`<div><span>住人</span><b>${R} / ${resOf(b)}人</b></div>`);
+    if (b.happy !== null && b.happy !== undefined) {
+      rows.push(`<div><span>満足度</span><b>${b.happy}</b></div>`);
+      rows.push(`<div><span>暮らし</span><b class="sub">${[b.fed ? '食事○' : '食事×', b.variety ? '米と魚○' : '米と魚×', b.sake ? '酒○' : '酒×', b.bath ? '湯屋○' : '湯屋×', b.faith ? '寺社○' : '寺社×'].join(' ')}</b></div>`);
+    }
+  }
+  if (rows.length) h += `<div class="rows">${rows.join('')}</div>`;
+  const keys = b.k === 'warehouse' ? GK.filter((g) => g0(b.store, g) > 0.01 || g0(b.inbound, g)) : [...new Set([...(d.in ? Object.keys(d.in) : []), ...(d.out ? Object.keys(d.out) : []), ...(b.k === 'market' ? ['rice', 'fish', 'sake'] : [])])];
+  if (b.k === 'tonya') for (const g in b.orders) if (b.orders[g].mode !== 'none' && !keys.includes(g)) keys.push(g);
+  if (keys.length) h += `<div class="sec">${b.k === 'warehouse' ? '蔵の中' : '置いてある品'}</div><div class="rows">${stockRows(b, keys) || '<div><span>空っぽ</span></div>'}</div>`;
+  if (b.k === 'market') h += `<div class="sec">並べる品</div><div class="acts">${['rice', 'fish', 'sake'].map((g) => `<button class="btn ${b.allow[g] ? 'btn-ai' : ''}" type="button" data-allow="${g}">${GOODS[g].name}：${b.allow[g] ? '並べる' : '並べない'}</button>`).join('')}</div>`;
+  if (b.k === 'tonya') h += tonyaHtml(b);
+  if (jobsOf(b)) h += prioRow(b);
+  h += `<div class="acts"><button class="btn" type="button" data-act="demolish">取りこわす</button><button class="btn btn-shu" type="button" data-act="close">閉じる</button></div>`;
+  return h;
+}
+function siteRows(b) {
+  const rows = Object.keys(b.need).map((g) => { const n = b.need[g], got = g0(b.got, g), inb2 = g0(b.inbound, g); return `<div class="prow"><span>${GOODS[g].name}</span><div class="bar"><i style="width:${(got / n) * 100}%"></i></div><b>${fmt(got)}/${n}${inb2 ? `+${fmt(inb2)}` : ''}</b></div>`; }).join('');
+  const builders = S.c.filter((c) => c.task && c.task.type === 'build' && c.task.site === b.id).length;
+  return `<div class="rows">${rows}<div class="prow"><span>組立</span><div class="bar"><i style="width:${(b.prog / Math.max(1, b.work)) * 100}%;background:#b23c2a"></i></div><b>${Math.floor((b.prog / Math.max(1, b.work)) * 100)}%</b></div>
+    <div><span>大工</span><b>${builders}人が作業中</b></div></div>
+    <p class="note">材料は蔵の人足が運び、普請小屋の大工が組み上げます。人足や大工は昼のあいだだけ働きます。</p>`;
+}
+function prioRow(b) {
+  const opts = [[0, '低'], [1, '普通'], [2, '高']];
+  return `<div class="segrow"><span>優先度</span><div class="seg">${opts.map(([v, l]) => `<button type="button" data-prio="${v}" class="${b.prio === v && !b.stopped ? 'on' : ''}">${l}</button>`).join('')}<button type="button" data-stop="1" class="${b.stopped ? 'on' : ''}">停止</button></div></div>`;
+}
+function tonyaHtml(b) {
+  return `<div class="sec">売り買いの指示</div><p class="desc">「売る」は蔵に指定の数だけ残して、残りを人足が問屋へ運び売ります。「買う」は毎朝その数を買い入れます（値段は1.6倍）。</p>
+  <div class="trade">${GK.map((g) => { const o = b.orders[g] || { mode: 'none', n: g === 'rice' ? 60 : 20 }; return `<div class="trow"><span>${GOODS[g].name}<br><small>${PRICE[g]}両</small></span>
+    <div class="seg">${[['none', 'なし'], ['sell', '売る'], ['buy', '買う']].map(([m, l]) => `<button type="button" data-tmode="${g}:${m}" class="${o.mode === m ? 'on' : ''}">${l}</button>`).join('')}</div>
+    <div class="step" ${o.mode === 'none' ? 'style="visibility:hidden"' : ''}><button type="button" data-tstep="${g}:-">−</button><b>${o.mode === 'sell' ? '残' : ''}${o.n}</b><button type="button" data-tstep="${g}:+">＋</button></div></div>`; }).join('')}</div>
+  <div class="rows"><div><span>これまでの売上</span><b>${fmt(S.sold)}両</b></div></div>`;
+}
+function openInfo(b) {
+  selected = b.id;
+  openSheet(infoHtml(b), { refresh: () => { const bb = B(b.id); if (!bb) { closeSheet(); return; } const sc = $('sheet').scrollTop; $('sheet').innerHTML = infoHtml(bb); $('sheet').scrollTop = sc; } });
+}
+
+/* --- ledger --- */
+function ledgerHtml() {
+  const m = S.stats.yday.made || {}, u = S.stats.yday.used || {};
+  const goods = GK.map((g) => `<div><span>${GOODS[g].name}</span><b>${fmt(stock(g))}<span class="sub">　昨日 +${fmt(m[g] || 0)} / −${fmt(u[g] || 0)}</span></b></div>`).join('');
+  const jobs = S.b.reduce((n, b) => n + (b.done && !b.stopped ? jobsOf(b) : 0), 0);
+  const employed = S.c.filter((c) => c.job).length;
+  const cap = S.b.reduce((n, b) => n + (b.done ? resOf(b) : 0), 0);
+  const food = stock('rice') + stock('fish') + S.b.filter((b) => b.k === 'market').reduce((n, b) => n + g0(b.store, 'rice') + g0(b.store, 'fish'), 0);
+  const days = foodDays();
+  const role = (r) => S.b.filter((b) => b.done && DEF[b.k] && DEF[b.k].role === r).reduce((n, b) => n + b.workers.length, 0);
+  const hungry = S.b.filter((b) => b.done && resOf(b) && b.fed === false).length;
+  return `${head('簿', '#2f4f6f', '帳簿', dateStr())}
+    <div class="sec">蔵の品（すべての蔵の合計）</div><div class="rows">${goods}</div>
+    <div class="sec">人々</div><div class="rows">
+      <div><span>人口 / 住める数</span><b>${S.c.length} / ${cap}人</b></div>
+      <div><span>働いている / 仕事の数</span><b>${employed} / ${jobs}人</b></div>
+      <div><span>人足 ・ 大工</span><b>${role('porter')}人 ・ ${role('builder')}人</b></div>
+      <div><span>人足の忙しさ（いま）</span><b>${porterBusy()}</b></div>
+      <div><span>仕事のない人</span><b>${S.c.length - employed}人</b></div>
+      <div><span>満足度の平均</span><b>${S.happy}</b></div>
+      <div><span>食べ物の蓄え</span><b>${fmt(food)}（およそ${Math.floor(days)}日分）</b></div>
+      ${hungry ? `<div><span>食べ物が届かない長屋</span><b style="color:var(--shu)">${hungry}軒</b></div>` : ''}
+    </div>
+    <p class="note">満足度は、食事・米と魚の両方・酒・湯屋・寺社・城の進み具合で上がります。満足度が高いほど人が集まり、よく働きます。</p>`;
+}
+function porterBusy() {
+  const ps = S.c.filter((c) => c.job && B(c.job) && B(c.job).k === 'warehouse');
+  if (!ps.length) return '人足がいません';
+  if (!isWork()) return '夜は休み';
+  const busy = ps.filter((c) => c.task).length, r = busy / ps.length;
+  return `${busy}/${ps.length}人が運搬中${r > 0.85 ? '（手が足りない）' : ''}`;
+}
+function openMenu() {
+  openSheet(`${head('他', '#6c6257', 'その他', '設定と記録')}
+    <div class="acts"><button class="btn" type="button" data-act="help">遊び方</button><button class="btn" type="button" data-act="sound">効果音：${SET.sound ? 'オン' : 'オフ'}</button></div>
+    <div class="acts"><button class="btn" type="button" data-act="save">いま保存する</button><button class="btn" type="button" data-act="title">タイトルへ</button></div>
+    <p class="note">町は1日ごとと、建物を建てたときに自動で保存されます（このブラウザの中だけ）。</p>`);
+}
+function openHelp() {
+  openSheet(`${head('?', '#2f4f6f', '遊び方', '普請奉行の心得')}
+    <div class="rows" style="gap:8px">
+      <div><span style="color:var(--ink)">1. 道を引く</span></div><p class="desc">人も荷も道しか通れません。「道」で始まりと終わりのマスをタップして敷きます。建物は道に接していないと動きません。</p>
+      <div><span style="color:var(--ink)">2. 建てる</span></div><p class="desc">置いただけでは普請場です。蔵の人足が材料を運び、普請小屋の大工が組み上げて完成します。</p>
+      <div><span style="color:var(--ink)">3. 人を働かせる</span></div><p class="desc">町人は朝に長屋から仕事場へ歩いて通い、夕方に帰ります。仕事場が遠いと働く時間が減ります。建物をタップして優先度や停止を指示できます。</p>
+      <div><span style="color:var(--ink)">4. 食べ物</span></div><p class="desc">長屋は市（9マス）か蔵（6マス）の範囲にないと食べ物が届きません。田んぼは冬に休むので、秋に米をたくわえましょう。</p>
+      <div><span style="color:var(--ink)">5. 操作</span></div><p class="desc">1本指でドラッグして地図を動かし、2本指でつまんで拡大・縮小します。上の ▶ で時の速さを変えられます。</p>
+    </div>
+    <div class="acts"><button class="btn btn-shu" type="button" data-act="close">閉じる</button></div>`, { short: false });
+}
+
+/* --- sheet events --- */
+$('sheet').addEventListener('click', (e) => {
+  const t = e.target.closest('button'); if (!t) return;
+  sfx.tap();
+  const act = t.dataset.act;
+  if (act === 'close') { closeSheet(); return; }
+  if (act === 'story') { showStoryLine(); return; }
+  if (act === 'replay') { const ch = CHAPTERS[S.chapter]; closeSheet(); playStory([...ch.intro], () => openGoals()); return; }
+  if (act === 'help') { openHelp(); return; }
+  if (act === 'sound') { SET.sound = !SET.sound; saveSet(); t.textContent = `効果音：${SET.sound ? 'オン' : 'オフ'}`; return; }
+  if (act === 'save') { save(); toast('保存した'); return; }
+  if (act === 'title') { save(); closeSheet(); toTitle(); return; }
+  if (act === 'castle') { startCastleStage(); closeSheet(); return; }
+  if (act === 'demolish') {
+    const b = B(selected); if (!b) return;
+    if (!t.dataset.armed) { t.dataset.armed = '1'; t.textContent = 'もう一度押すと取りこわす'; return; }
+    closeSheet(); demolish(b); return;
+  }
+  if (t.dataset.cat) { buildCat = t.dataset.cat; openBuildMenu(); return; }
+  if (t.dataset.build) { const k = t.dataset.build; if (S.chapter < DEF[k].unlock) { toast('物語を進めると建てられます'); return; } startBuild(k); return; }
+  const b = B(selected);
+  if (b && t.dataset.prio !== undefined) { b.prio = Number(t.dataset.prio); b.stopped = false; assignJobs(true); save(); sheetFn && sheetFn(); return; }
+  if (b && t.dataset.stop) { b.stopped = !b.stopped; assignJobs(false); save(); sheetFn && sheetFn(); return; }
+  if (b && t.dataset.allow) { b.allow[t.dataset.allow] = !b.allow[t.dataset.allow]; save(); sheetFn && sheetFn(); return; }
+  if (b && t.dataset.tmode) { const [g, m] = t.dataset.tmode.split(':'); const o = b.orders[g] || { mode: 'none', n: g === 'rice' ? 60 : 20 }; o.mode = m; b.orders[g] = o; save(); sheetFn && sheetFn(); return; }
+  if (b && t.dataset.tstep) { const [g, s] = t.dataset.tstep.split(':'); const o = b.orders[g]; if (!o) return; o.n = clamp(o.n + (s === '+' ? 5 : -5), 0, 500); save(); sheetFn && sheetFn(); return; }
+});
+
+/* --- tools --- */
+$('tRoad').addEventListener('click', () => { sfx.unlock(); closeSheet(); if (mode && mode.type === 'road') { exitMode(); return; } mode = { type: 'road', a: null, preview: null }; setTool('tRoad'); updatePlacebar(); });
+$('tBuild').addEventListener('click', () => { sfx.unlock(); if (mode) exitMode(); openBuildMenu(); });
+$('tRemove').addEventListener('click', () => { sfx.unlock(); closeSheet(); if (mode && mode.type === 'remove') { exitMode(); return; } mode = { type: 'remove', target: null }; setTool('tRemove'); updatePlacebar(); });
+$('tBook').addEventListener('click', () => { sfx.unlock(); if (mode) exitMode(); openSheet(ledgerHtml(), { refresh: () => { const sc = $('sheet').scrollTop; $('sheet').innerHTML = ledgerHtml(); $('sheet').scrollTop = sc; } }); });
+$('tMenu').addEventListener('click', () => { sfx.unlock(); if (mode) exitMode(); openMenu(); });
+$('goalBtn').addEventListener('click', () => { sfx.unlock(); if (mode) exitMode(); const ch = CHAPTERS[S.chapter]; if (ch && ch.goals.every((g) => g.ok())) { checkChapter(); return; } openGoals(); });
+$('pbNo').addEventListener('click', () => { sfx.tap(); exitMode(); });
+$('pbOk').addEventListener('click', () => {
+  if (!mode) return;
+  if (mode.type === 'build') { if (placeBuilding(mode.k, mode.x, mode.y)) { toast(`${DEF[mode.k].name}の普請場を置いた。人足と大工が向かう`); exitMode(); } else updatePlacebar(); return; }
+  if (mode.type === 'road' && mode.preview && mode.preview.ok) { const end = mode.preview.tiles[mode.preview.tiles.length - 1]; if (placeRoad(mode.preview.tiles)) { mode.a = end; mode.preview = null; updatePlacebar(); } return; }
+  if (mode.type === 'remove' && mode.target) { const tg = mode.target; if (tg.b) demolish(tg.b); else removeRoad(tg.i); mode.target = null; updatePlacebar(); }
+});
+$('speed').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; sfx.unlock(); const s = Number(b.dataset.s); if (s === 0) paused = true; else { paused = false; SET.speed = s; saveSet(); } renderTop(); });
+
+/* --- map input --- */
+const ptrs = new Map(); let pinch = null, dragMoved = false;
+cv.addEventListener('pointerdown', (e) => {
+  sfx.unlock(); cv.setPointerCapture(e.pointerId);
+  ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY });
+  if (ptrs.size === 1) dragMoved = false;
+  if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; const r = cv.getBoundingClientRect(); const mx = (a.x + b.x) / 2 - r.left, my = (a.y + b.y) / 2 - r.top; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, z: cam.z, wx: wx(mx), wy: wy(my) }; dragMoved = true; }
+});
+cv.addEventListener('pointermove', (e) => {
+  const p = ptrs.get(e.pointerId); if (!p) return;
+  const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY;
+  if (ptrs.size === 1) {
+    if (Math.hypot(p.x - p.x0, p.y - p.y0) > 8) dragMoved = true;
+    if (dragMoved) { cam.x -= dx / tsz(); cam.y -= dy / tsz(); clampCam(); }
+  } else if (ptrs.size === 2 && pinch) {
+    const [a, b] = [...ptrs.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y);
+    const r = cv.getBoundingClientRect(); const mx = (a.x + b.x) / 2 - r.left, my = (a.y + b.y) / 2 - r.top;
+    cam.z = clamp(pinch.z * d / pinch.d, 0.55, 2.6);
+    cam.x = pinch.wx - (mx - CW / 2) / tsz(); cam.y = pinch.wy - (my - CH / 2) / tsz();
+    clampCam();
+  }
+});
+const endPtr = (e) => {
+  const p = ptrs.get(e.pointerId); if (!p) return;
+  ptrs.delete(e.pointerId);
+  if (ptrs.size < 2) pinch = null;
+  if (e.type === 'pointerup' && ptrs.size === 0 && !dragMoved) { const r = cv.getBoundingClientRect(); tapMap(e.clientX - r.left, e.clientY - r.top); }
+};
+cv.addEventListener('pointerup', endPtr); cv.addEventListener('pointercancel', endPtr);
+cv.addEventListener('wheel', (e) => { e.preventDefault(); const r = cv.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top; const a = wx(mx), b2 = wy(my); cam.z = clamp(cam.z * (e.deltaY < 0 ? 1.12 : 0.89), 0.55, 2.6); cam.x = a - (mx - CW / 2) / tsz(); cam.y = b2 - (my - CH / 2) / tsz(); clampCam(); }, { passive: false });
+cv.addEventListener('contextmenu', (e) => e.preventDefault());
+function tapMap(px, py) {
+  const x = Math.floor(wx(px)), y = Math.floor(wy(py));
+  if (!inb(x, y)) { return; }
+  const i = idx(x, y);
+  if (mode && mode.type === 'build') { const d = DEF[mode.k]; mode.x = clamp(x - Math.floor((d.w - 1) / 2), 0, W - d.w); mode.y = clamp(y - Math.floor((d.h - 1) / 2), 0, H - d.h); updatePlacebar(); sfx.tap(); return; }
+  if (mode && mode.type === 'road') {
+    if (mode.a === null || mode.preview) { if (mode.preview && i === mode.a) return; if (mode.a === null) { mode.a = i; mode.preview = null; } else { mode.preview = lPath(mode.a, i); } }
+    else { mode.preview = i === mode.a ? null : lPath(mode.a, i); }
+    updatePlacebar(); sfx.tap(); return;
+  }
+  if (mode && mode.type === 'remove') { const b = occ[i] >= 0 ? B(occ[i]) : null; mode.target = b ? { b } : road[i] ? { i } : null; updatePlacebar(); sfx.tap(); return; }
+  if (occ[i] >= 0) { sfx.tap(); openInfo(B(occ[i])); return; }
+  if (TER[i] === 'h') {
+    if (S.chapter >= 5) { const st = STAGES[S.castle]; openSheet(`${head('城', '#b23c2a', '城山', '築城を始める')}<p class="desc">${st.desc}</p><div class="rows"><div><span>材料</span><b>${costStr(st.cost, st.money)}</b></div></div><p class="note">城山に接するように道をつないでおくと、人足と大工が通えます。</p><div class="acts"><button class="btn btn-shu" type="button" data-act="castle">${st.name}の普請を始める</button><button class="btn" type="button" data-act="close">閉じる</button></div>`); }
+    else toast('城山。いずれ殿の城がここに建つ');
+    return;
+  }
+  const names = { '.': '平地', f: '森（木こり小屋の近くに）', w: '川（道を引くと橋になる）', r: '岩場（石切り場はこの隣に）', c: '粘土の土地（粘土場を建てられる）' };
+  toast(names[TER[i]] || '');
+}
+
+/* ======================= loop & screens ======================= */
+function frame(t) {
+  rafId = requestAnimationFrame(frame);
+  const dt = Math.min(0.1, Math.max(0, (t - lastT) / 1000)); lastT = t;
+  const running = !paused && !(sheetPause && !$('sheetWrap').hidden) && $('title').hidden;
+  if (running && S) {
+    let dtH = dt / HOUR_SEC * SET.speed;
+    while (dtH > 0) { const st = Math.min(dtH, 0.05); tick(st); dtH -= st; }
+  }
+  draw(t);
+  if (S && t - (frame.lastUi || 0) > 250) { frame.lastUi = t; renderTop(); if (mode) updatePlacebar(); if (t - (frame.lastCh || 0) > 1000) { frame.lastCh = t; checkChapter(); } }
+}
+function showGame() {
+  $('title').hidden = true; $('game').hidden = false;
+  requestAnimationFrame(() => { resize(); terrainDirty = true; });
+  if (!rafId) { lastT = performance.now(); rafId = requestAnimationFrame(frame); }
+}
+function toTitle() {
+  exitMode(); cancelAnimationFrame(rafId); rafId = 0;
+  $('game').hidden = true; $('title').hidden = false; renderTitle();
+}
+function renderTitle() {
+  const d = store.get(SAVE_KEY, null);
+  const cb = $('contBtn'), nb = $('newBtn');
+  if (d && d.t !== undefined) { const day = Math.floor(d.t / 24); cb.hidden = false; cb.innerHTML = `<span>つづきから</span><small>${Math.floor(day / 20) + 1}年目 ${SEASONS[Math.floor((day % 20) / 5)]} ・ 人口${(d.c || []).length}人</small>`; nb.className = 'btn'; }
+  else { cb.hidden = true; nb.className = 'btn btn-shu'; }
+  nb.textContent = '新しく始める'; delete nb.dataset.armed;
+}
+$('contBtn').addEventListener('click', () => { sfx.unlock(); if (!load()) { toast('保存データを読めませんでした'); renderTitle(); return; } showGame(); });
+$('newBtn').addEventListener('click', () => {
+  sfx.unlock(); const nb = $('newBtn');
+  if (store.get(SAVE_KEY, null) && !nb.dataset.armed) { nb.dataset.armed = '1'; nb.textContent = 'もう一度押すと新しく始めます（今の町は消えます）'; return; }
+  newGame(); save(); showGame();
+});
+window.addEventListener('resize', () => { if (!$('game').hidden) resize(); });
+if ('ResizeObserver' in window) new ResizeObserver(() => { if (!$('game').hidden) resize(); }).observe(stageEl);
+document.addEventListener('visibilitychange', () => { if (document.hidden && S && !$('game').hidden) save(); });
+window.addEventListener('pagehide', () => { if (S && !$('game').hidden) save(); });
+if (document.fonts && document.fonts.load) document.fonts.load('800 14px "Shippori Mincho B1"').catch(() => {});
+renderTitle();
+</script>
+</body>
+</html>
