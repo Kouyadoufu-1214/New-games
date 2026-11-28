@@ -149,6 +149,8 @@ h1,h2,h3,p{margin:0}
 /* ===== 恋普請: boot / opening / title / clouds ===== */
 input{-webkit-user-select:text;user-select:text;font:inherit}
 .pt{width:100%;height:100%;display:block;overflow:visible}
+img.pt{object-fit:contain;object-position:50% 100%;image-rendering:pixelated;image-rendering:crisp-edges;-webkit-user-drag:none;pointer-events:none}
+@supports (image-rendering:pixelated){img.pt{image-rendering:pixelated}}
 .boot{position:fixed;inset:0;z-index:60;background:#fffdf6;display:grid;place-items:center;cursor:pointer;touch-action:manipulation}
 .boot-in{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
 .boot-in b{font-family:var(--font-display);font-weight:800;font-size:15px;letter-spacing:.4em;color:#a8844a}
@@ -236,8 +238,8 @@ input{-webkit-user-select:text;user-select:text;font:inherit}
 .ti-main{position:relative;z-index:3;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:space-between;
   padding:calc(26px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
 .ti-logo{animation:logoIn 1s cubic-bezier(.2,1,.3,1) both}
-.ti-heroes{position:absolute;left:0;right:0;bottom:200px;height:min(40%,330px);display:flex;justify-content:center;align-items:flex-end;z-index:2;pointer-events:none}
-.ti-heroes .tih{height:100%;aspect-ratio:200/240;max-width:42%;margin:0 -9%;animation:rise .8s cubic-bezier(.2,1.2,.4,1) both;filter:drop-shadow(0 6px 10px rgba(60,30,30,.25))}
+.ti-heroes{position:absolute;left:0;right:0;bottom:196px;height:min(44%,380px);display:flex;justify-content:center;align-items:flex-end;z-index:2;pointer-events:none}
+.ti-heroes .tih{height:100%;aspect-ratio:200/240;max-width:46%;margin:0 -11.5%;animation:rise .8s cubic-bezier(.2,1.2,.4,1) both;filter:drop-shadow(0 6px 10px rgba(60,30,30,.25))}
 .ti-heroes .tih.h1,.ti-heroes .tih.h2{z-index:2;height:106%}
 .ti-heroes .tih.h0{animation-delay:.1s}.ti-heroes .tih.h1{animation-delay:.2s}.ti-heroes .tih.h2{animation-delay:.3s}.ti-heroes .tih.h3{animation-delay:.4s}
 .ti-panel{width:100%;max-width:360px;display:flex;flex-direction:column;align-items:center;gap:10px;background:rgba(255,250,240,.9);border:1px solid #e0c9a0;border-radius:18px;padding:14px 14px 10px;box-shadow:0 -6px 24px rgba(80,40,30,.18);animation:rise .6s .3s both}
@@ -726,159 +728,269 @@ const CHAPTERS = [
 
 
 /* ======================= 恋普請: anime-style portraits (SVG) ======================= */
-let PID = 0;
 function shadeHex(hex, k) {
   const n = parseInt(hex.slice(1), 16), ch = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
   const f = (v) => Math.max(0, Math.min(255, Math.round(k < 0 ? v * (1 + k) : v + (255 - v) * k)));
   return '#' + ch.map((v) => f(v).toString(16).padStart(2, '0')).join('');
 }
-const EYES = {
-  round: { sc: 'M-13,-1 C-11,-11 10,-13 13,-4 C13,6 9,12 0,12 C-9,12 -13,6 -13,-1 Z', up: 'M-15,0 C-12,-12 10,-15 15,-5 M13,-5 L17,-9', uw: 3.6, low: 'M-8,12 Q0,14 8,11', ix: 1, iy: 2, rx: 8.6, ry: 10.6 },
-  sharp: { sc: 'M-13,2 C-9,-7 9,-10 14,-5 C13,4 8,9 0,9 C-8,9 -12,6 -13,2 Z', up: 'M-15,3 C-10,-8 10,-12 16,-6 M14,-6 L18,-8', uw: 3.8, low: 'M-7,9 Q0,10.5 7,8', ix: 1, iy: 1, rx: 7, ry: 8.8 },
-  tare: { sc: 'M-13,-4 C-8,-11 10,-10 14,1 C12,8 7,11 0,11 C-8,10 -12,4 -13,-4 Z', up: 'M-15,-4 C-9,-13 10,-12 16,2', uw: 3.4, low: 'M-6,11 Q2,12 9,8', ix: 1, iy: 2, rx: 8.2, ry: 10 },
-  calm: { sc: 'M-13,2 C-8,-3 9,-4 14,1 C12,7 7,10 0,10 C-8,9 -12,6 -13,2 Z', up: 'M-15,2 C-9,-5 10,-6 16,1', uw: 3.8, low: 'M-7,10 Q0,11 7,9', ix: 1, iy: 4, rx: 7.6, ry: 9 },
-  male: { sc: 'M-12,0 C-8,-7 8,-8 13,-2 C11,4 6,7 0,7 C-7,7 -11,4 -12,0 Z', up: 'M-14,0 C-9,-9 9,-10 14,-3', uw: 3.2, low: null, ix: 1, iy: 0.5, rx: 6, ry: 7 },
-  fierce: { sc: 'M-12,4 C-7,-2 8,-7 13,-6 C12,3 6,7 0,7 C-7,7 -11,6 -12,4 Z', up: 'M-14,5 C-8,-3 9,-9 15,-7', uw: 3.8, low: null, ix: 1, iy: 1.5, rx: 5.6, ry: 6.5 },
-  old: { sc: 'M-11,1 C-7,-3 7,-4 11,0 C9,4 5,5 0,5 C-6,5 -10,4 -11,1 Z', up: 'M-13,1 C-8,-5 8,-6 13,0', uw: 2.8, low: null, ix: 0.5, iy: 1, rx: 4.8, ry: 4.6 },
+/* ======================= 恋普請: pixel-art portraits (ドット絵, 50x60) ======================= */
+const PXW = 50, PXH = 60, PX_CACHE = new Map();
+const hexRGB = (h) => { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+const mixHex = (a, b, t) => { const A = hexRGB(a), Bc = hexRGB(b); return '#' + A.map((v, i) => Math.round(v + (Bc[i] - v) * t).toString(16).padStart(2, '0')).join(''); };
+const lumHex = (h) => { const [r, g, b] = hexRGB(h); return (0.299 * r + 0.587 * g + 0.114 * b) / 255; };
+const mk = () => new Uint8Array(PXW * PXH);
+const mIn = (m, x, y) => x >= 0 && y >= 0 && x < PXW && y < PXH && m[y * PXW + x] === 1;
+function mEll(m, cx, cy, rx, ry) { for (let y = Math.max(0, Math.floor(cy - ry)); y < Math.min(PXH, Math.ceil(cy + ry) + 1); y++) for (let x = Math.max(0, Math.floor(cx - rx)); x < Math.min(PXW, Math.ceil(cx + rx) + 1); x++) { const dx = (x + 0.5 - cx) / rx, dy = (y + 0.5 - cy) / ry; if (dx * dx + dy * dy <= 1) m[y * PXW + x] = 1; } return m; }
+function mPoly(m, pts) {
+  const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
+  const x0 = Math.max(0, Math.floor(Math.min(...xs))), x1 = Math.min(PXW, Math.ceil(Math.max(...xs)) + 1), y0 = Math.max(0, Math.floor(Math.min(...ys))), y1 = Math.min(PXH, Math.ceil(Math.max(...ys)) + 1);
+  for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+    const px = x + 0.5, py = y + 0.5; let ins = false;
+    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) { const [xi, yi] = pts[i], [xj, yj] = pts[j]; if ((yi > py) !== (yj > py) && px < (xj - xi) * (py - yi) / (yj - yi) + xi) ins = !ins; }
+    if (ins) m[y * PXW + x] = 1;
+  }
+  return m;
+}
+function mRect(m, x0, y0, x1, y1) { for (let y = Math.max(0, y0); y <= Math.min(PXH - 1, y1); y++) for (let x = Math.max(0, x0); x <= Math.min(PXW - 1, x1); x++) m[y * PXW + x] = 1; return m; }
+const mCut = (m, f) => { for (let y = 0; y < PXH; y++) for (let x = 0; x < PXW; x++) if (m[y * PXW + x] && f(x, y)) m[y * PXW + x] = 0; return m; };
+const mSub = (m, o) => { for (let i = 0; i < m.length; i++) if (o[i]) m[i] = 0; return m; };
+const mOr = (m, ...os) => { for (const o of os) for (let i = 0; i < m.length; i++) if (o[i]) m[i] = 1; return m; };
+const mAnd = (m, o) => { for (let i = 0; i < m.length; i++) if (!o[i]) m[i] = 0; return m; };
+const mTris = (m, tris) => { for (const t of tris) mPoly(m, t); return m; };
+/* paint a mask: dark outline on its edge, shadow on the lower-right inside, optional light on the upper-left */
+function paint(B, m, pal, o = {}) {
+  const at = (x, y) => (y >= PXH && o.openBottom ? mIn(m, x, PXH - 1) : mIn(m, x, y));
+  for (let y = 0; y < PXH; y++) for (let x = 0; x < PXW; x++) {
+    if (!mIn(m, x, y)) continue;
+    const edge = !at(x - 1, y) || !at(x + 1, y) || !at(x, y - 1) || !at(x, y + 1);
+    let c = pal.b;
+    if (edge && !o.noLine) c = pal.o;
+    else if (o.shade !== false && (!at(x + 1, y + 1) || !at(x, y + 2) || (o.shadeR && !at(x + 2, y)))) c = pal.s;
+    else if (o.lightTL && pal.l && (!at(x - 1, y - 2) || !at(x - 2, y - 1))) c = pal.l;
+    B[y * PXW + x] = c;
+  }
+}
+function fill(B, m, col) { for (let i = 0; i < m.length; i++) if (m[i]) B[i] = col; }
+function dot(B, x, y, col) { if (x >= 0 && y >= 0 && x < PXW && y < PXH && col) B[y * PXW + x] = col; }
+function line(B, x0, y0, x1, y1, col, m) {
+  const dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1; let e = dx + dy;
+  for (;;) { if (!m || mIn(m, x0, y0)) dot(B, x0, y0, col); if (x0 === x1 && y0 === y1) break; const e2 = 2 * e; if (e2 >= dy) { e += dy; x0 += sx; } if (e2 <= dx) { e += dx; y0 += sy; } }
+}
+function glyph(B, rows, x0, y0, map, mirror) {
+  for (let r = 0; r < rows.length; r++) { const row = rows[r]; for (let c = 0; c < row.length; c++) { const ch = row[mirror ? row.length - 1 - c : c]; if (ch === '.' || !(ch in map)) continue; dot(B, x0 + c, y0 + r, map[ch]); } }
+}
+const mir = (pts) => pts.map(([x, y]) => [49 - x, y]);
+/* ---- faces & features ---- */
+const FACE_ROWS = [
+  '..qSSSSSSSSSSSSSSSSSSSSq..', '.qSSSSSSSSSSSSSSSSSSSSSSq.',
+  ...Array(17).fill('qSSSSSSSSSSSSSSSSSSSSSSSSq'),
+  '.qSSSSSSSSSSSSSSSSSSSSSSq.', '.qSSSSSSSSSSSSSSSSSSSSSSq.', '..qSSSSSSSSSSSSSSSSSSSSq..',
+  '...qqSSSSSSSSSSSSSSSSqq...', '.....qqqSSSSSSSSSSqqq.....', '........qqqqqqqqqq........',
+];
+const FACE_X = 12, FACE_Y = 11;
+const faceMask = (() => { const m = mk(); FACE_ROWS.forEach((row, r) => [...row].forEach((ch, c) => { if (ch !== '.') m[(FACE_Y + r) * PXW + FACE_X + c] = 1; })); return m; })();
+const EAR = ['.qq', 'qSs', 'qSs', 'qSs', '.qs', '..q'];
+const PEYES = {
+  round: ['...kkkk..', '.kkkkkkkk', 'kkiiiiiik', 'keiWWiIIe', 'keiWWIIIe', 'keIIIIIIe', 'keIIJJIIe', '.eIJJJJI.', '..iJJJWi.', '...kkkk..'],
+  sharp: ['.........', '.........', 'kkkkkkkkk', 'kkiiiiikk', 'keiWWIIIe', 'keiWWIIIe', 'keIIJJIIe', '.eIJJJJI.', '..iJJJWi.', '...kkkk..'],
+  tare: ['.........', '....kkkkk', '..kkkkkkk', '.kkiiiiik', 'kkiWWiIIe', 'keiWWIIIe', 'keIIJJIIe', 'keIJJJJI.', 'kkiJJJWi.', 'kkkkkk...'],
+  male: ['.........', '.........', '.........', '.........', '.kkkkkkk.', 'kkiiiiikk', '.iWWIIIi.', '.iIIJJIi.', '..kkkkk..', '.........'],
+  fierce: ['.........', '.........', 'kk.......', '.kkkk....', '..kkkkkkk', '..iWWIIi.', '..iIJJIi.', '...kkkk..', '.........', '.........'],
+  calm: ['.........', '.........', '.........', '.........', '.........', 'kkkkkkkkk', '.iWWIIIi.', '..kkkkk..', '.........', '.........'],
+  old: ['.........', '.........', '.........', '.........', '.........', '.kkkkkkk.', 'k.......k', '.........', '.........', '.........'],
+  happy: ['.........', '.........', '.........', '...kkk...', '..kkkkk..', '.kk...kk.', 'kk.....kk', 'k.......k', '.........', '.........'],
+  mhappy: ['.........', '.........', '.........', '.........', '...kkk...', '..k...k..', '.k.....k.', '.........', '.........', '.........'],
+  surprise: ['..kkkkk..', '.kkkkkkkk', 'keeeeeeee', 'keeIIIIee', 'keIIWWIee', 'keIIIIIee', 'keeIIIIee', '.keeeeee.', '..kkkkk..', '.........'],
 };
-const BROWS = { normal: 'M-13,-17 Q-2,-23 12,-19', angry: 'M-13,-22 Q0,-20 12,-13', soft: 'M-13,-19 Q-1,-24 12,-21', sad: 'M-13,-15 Q0,-19 12,-22', up: 'M-13,-22 Q0,-28 12,-23', thick: 'M-14,-16 Q-1,-22 13,-18' };
-function eyeSvg(cx, cy, mirror, sp, id, expr) {
-  const tr = `translate(${cx},${cy})${mirror ? ' scale(-1,1)' : ''}`;
-  if (expr === 'joy' && sp.g === 'f') return `<path transform="${tr}" d="M-12,3 Q0,-9 12,3" fill="none" stroke="#2b1d1d" stroke-width="3.4" stroke-linecap="round"/>`;
-  const e = EYES[sp.eyeShape] || EYES.round, cid = id + (mirror ? 'R' : 'L');
-  const glow = sp.glow ? `<ellipse cx="${e.ix}" cy="${e.iy}" rx="16" ry="12" fill="${sp.eye}" opacity=".35"/>` : '';
-  return `<g transform="${tr}">${glow}<clipPath id="${cid}"><path d="${e.sc}"/></clipPath><path d="${e.sc}" fill="#fff"/>
-    <g clip-path="url(#${cid})"><ellipse cx="${e.ix}" cy="${e.iy}" rx="${e.rx}" ry="${e.ry}" fill="url(#${id}i)"/><ellipse cx="${e.ix}" cy="${e.iy + 1.5}" rx="${e.rx * 0.48}" ry="${e.ry * 0.55}" fill="${shadeHex(sp.eye, -0.72)}"/><path d="${e.sc}" fill="none" stroke="${shadeHex(sp.eye, -0.6)}" stroke-opacity=".28" stroke-width="5"/></g>
-    <circle cx="${e.ix - 3}" cy="${e.iy - e.ry * 0.4}" r="${e.rx * 0.36}" fill="#fff"/><circle cx="${e.ix + 3.5}" cy="${e.iy + e.ry * 0.45}" r="${e.rx * 0.18}" fill="#fff" opacity=".9"/>
-    <path d="${e.up}" fill="none" stroke="#2b1d1d" stroke-width="${e.uw}" stroke-linecap="round"/>${e.low ? `<path d="${e.low}" fill="none" stroke="#2b1d1d" stroke-width="1.2" stroke-linecap="round" opacity=".7"/>` : ''}</g>`;
+const PMOUTHS = {
+  smile: ['.k..k.', '..kk..'], grin: ['.kkkk.', '.kRRk.', '..kk..'], fang: ['.kkkk.', '.kWRk.', '..kk..'],
+  small: ['......', '..kk..'], flat: ['......', '.kkkk.'], smirk: ['....k.', '.kkk..'],
+  open: ['..kk..', '.kRRk.', '..kk..'], frown: ['..kk..', '.k..k.'], shout: ['.kkkk.', 'kRRRRk', 'kRPPRk', '.kkkk.'],
+};
+const PBROWS = {
+  angry: [[14, 16], [15, 16], [16, 17], [17, 17], [18, 18], [19, 18], [20, 19], [21, 19]],
+  sad: [[14, 19], [15, 19], [16, 18], [17, 18], [18, 17], [19, 17], [20, 16], [21, 16]],
+  up: [[15, 16], [16, 15], [17, 15], [18, 15], [19, 15], [20, 16]],
+};
+/* ---- hair: [back mask, front mask] built from shapes ---- */
+const DOME = () => mEll(mk(), 24.5, 17, 16.5, 15);
+const crown = (y = 11) => mCut(DOME(), (x, yy) => yy > y);
+const SPIKES_GENKI = [[[10, 12], [16, 12], [12, 20]], [[14, 12], [21, 12], [17, 18]], [[18, 12], [25, 12], [21, 20]], [[23, 12], [29, 12], [26, 17]], [[27, 12], [33, 12], [29, 20]], [[31, 12], [37, 12], [34, 18]], [[35, 12], [40, 12], [38, 20]]];
+const SPIKES_SHARP = [[[10, 12], [15, 12], [11, 20]], [[13, 12], [19, 12], [15, 18]], [[17, 12], [23, 12], [20, 20]], [[22, 12], [28, 12], [24, 17]], [[26, 12], [32, 12], [30, 20]], [[30, 12], [36, 12], [33, 18]], [[34, 12], [40, 12], [38, 20]]];
+const SPIKES_MALE = [[[10, 12], [16, 12], [12, 17]], [[15, 12], [22, 12], [18, 16]], [[20, 12], [27, 12], [24, 17]], [[26, 12], [33, 12], [30, 16]], [[32, 12], [39, 12], [37, 17]]];
+const SPIKES_MESSY = [[[9, 12], [15, 12], [10, 19]], [[13, 12], [20, 12], [16, 18]], [[18, 12], [24, 12], [22, 20]], [[23, 12], [29, 12], [25, 16]], [[27, 12], [33, 12], [31, 19]], [[31, 12], [38, 12], [35, 17]], [[35, 12], [41, 12], [40, 19]]];
+const HAIR = {
+  koharu: () => ({
+    back: mOr(DOME(), mPoly(mk(), [[35, 7], [42, 8], [47, 14], [48, 26], [46, 38], [42, 47], [40, 44], [42, 34], [41, 22], [38, 14]])),
+    front: mOr(crown(), mRect(mk(), 10, 9, 39, 13), mTris(mk(), SPIKES_GENKI), mPoly(mk(), [[8, 12], [13, 12], [14, 22], [12, 31], [9, 27]]), mPoly(mk(), [[37, 12], [41, 12], [41, 27], [38, 31], [36, 22]]), mPoly(mk(), [[24, 4], [26, 0], [31, 0], [29, 1.5], [27, 4]])),
+    strands: [[20, 6, 18, 12], [30, 5, 31, 12]],
+  }),
+  yukino: () => ({
+    back: mOr(DOME(), mPoly(mk(), [[8, 14], [41, 14], [45, 60], [4, 60]])),
+    front: mOr(crown(), mRect(mk(), 10, 8, 39, 19), mRect(mk(), 8, 11, 13, 35), mRect(mk(), 36, 11, 41, 35)),
+    strands: [[14, 12, 14, 18], [19, 11, 19, 18], [25, 11, 25, 18], [30, 11, 30, 18], [35, 12, 35, 18], [10, 20, 10, 33], [39, 20, 39, 33]],
+  }),
+  chizuru: () => ({
+    back: mOr(DOME(), mPoly(mk(), [[9, 12], [40, 12], [43, 22], [41, 32], [44, 42], [42, 50], [45, 60], [4, 60], [7, 50], [5, 42], [8, 32], [6, 22]])),
+    front: mOr(crown(), mPoly(mk(), [[9, 9], [40, 7], [40, 13], [34, 12], [29, 14], [24, 17], [19, 20], [14, 22], [11, 21], [9, 16]]), mPoly(mk(), [[8, 12], [14, 14], [15, 24], [13, 32], [15, 40], [12, 46], [9, 40], [10, 30], [7, 22]]), mPoly(mk(), [[36, 11], [41, 12], [42, 24], [40, 34], [42, 40], [38, 42], [38, 30], [36, 22]])),
+    strands: [[30, 8, 22, 16], [36, 8, 32, 12], [11, 26, 12, 38], [39, 24, 40, 36]],
+  }),
+  kaede: () => ({
+    back: mOr(mCut(DOME(), (x, y) => y > 28), mPoly(mk(), [[33, 6], [40, 4], [46, 8], [47, 16], [44, 24], [41, 28], [42, 18], [39, 10]])),
+    front: mOr(crown(), mRect(mk(), 10, 9, 39, 13), mTris(mk(), SPIKES_SHARP), mPoly(mk(), [[8, 12], [13, 12], [13, 24], [10, 27]]), mPoly(mk(), [[37, 12], [41, 12], [40, 27], [37, 24]])),
+    strands: [[16, 6, 15, 12], [29, 5, 30, 12]],
+  }),
+  male: () => ({ back: mCut(DOME(), (x, y) => y > 22), front: mOr(crown(), mRect(mk(), 10, 9, 39, 12), mTris(mk(), SPIKES_MALE), mPoly(mk(), [[8, 12], [12, 12], [12, 20], [9, 19]]), mPoly(mk(), [[37, 12], [41, 12], [40, 19], [37, 20]])), strands: [[22, 5, 21, 11]] }),
+  messy: () => ({ back: mCut(DOME(), (x, y) => y > 24), front: mOr(crown(), mRect(mk(), 10, 9, 39, 12), mTris(mk(), SPIKES_MESSY), mPoly(mk(), [[19, 4], [21, 0], [24, 3]]), mPoly(mk(), [[25, 3], [29, 0], [29, 4]]), mPoly(mk(), [[8, 12], [12, 12], [12, 22], [8, 20]]), mPoly(mk(), [[37, 12], [41, 12], [41, 20], [37, 22]])), strands: [[20, 5, 19, 11], [30, 5, 31, 11]] }),
+  spiky: () => ({ back: mCut(DOME(), (x, y) => y > 26), front: mOr(crown(), mRect(mk(), 10, 9, 39, 13), mTris(mk(), SPIKES_GENKI), mPoly(mk(), [[8, 12], [13, 12], [13, 23], [9, 24]]), mPoly(mk(), [[36, 12], [41, 12], [40, 24], [36, 23]])), strands: [[20, 6, 18, 12]] }),
+  side: () => ({ back: DOME(), front: mOr(crown(), mPoly(mk(), [[9, 9], [40, 7], [40, 13], [34, 12], [29, 14], [24, 17], [19, 19], [14, 21], [11, 20], [9, 16]]), mPoly(mk(), [[8, 12], [13, 14], [14, 24], [11, 30], [9, 26]]), mPoly(mk(), [[36, 12], [41, 12], [40, 26], [38, 30], [36, 22]])), strands: [[30, 8, 22, 16]] }),
+  short: () => ({ back: mCut(DOME(), (x, y) => y > 28), front: mOr(crown(), mRect(mk(), 10, 9, 39, 13), mTris(mk(), SPIKES_SHARP.map((t) => t.map(([x, y]) => [x, y > 12 ? y - 1 : y]))), mPoly(mk(), [[8, 12], [13, 12], [14, 25], [11, 28], [9, 25]]), mPoly(mk(), [[36, 12], [41, 12], [40, 25], [38, 28], [35, 25]])), strands: [[18, 6, 17, 12]] }),
+  hime: () => ({ back: DOME(), front: mOr(crown(), mRect(mk(), 10, 8, 39, 19), mRect(mk(), 8, 11, 13, 34), mRect(mk(), 36, 11, 41, 34)), strands: [[16, 11, 16, 18], [24, 11, 24, 18], [33, 11, 33, 18]] }),
+  sakayaki: () => ({ back: mCut(DOME(), (x, y) => y > 22), front: mOr(mPoly(mk(), [[8, 9], [13, 10], [12, 22], [9, 21]]), mPoly(mk(), [[41, 9], [36, 10], [37, 22], [40, 21]])), pate: mCut(crown(12), (x, y) => y > 11), strands: [] }),
+};
+const BACKS = {
+  long: () => mPoly(mk(), [[8, 14], [41, 14], [45, 60], [4, 60]]),
+  wavy: () => mPoly(mk(), [[9, 12], [40, 12], [43, 22], [41, 32], [44, 42], [42, 50], [45, 60], [4, 60], [7, 50], [5, 42], [8, 32], [6, 22]]),
+  pony: () => mPoly(mk(), [[35, 7], [42, 8], [47, 14], [48, 26], [46, 38], [42, 47], [40, 44], [42, 34], [41, 22], [38, 14]]),
+  tied: () => mPoly(mk(), [[36, 22], [42, 28], [44, 38], [41, 46], [40, 36], [37, 29]]),
+  bun: () => mEll(mk(), 24.5, 4.5, 6.5, 5),
+  topknot: () => mPoly(mk(), [[20, 5], [22, 0], [27, 0], [29, 5]]),
+  short: () => mk(), pony2: () => mk(),
+};
+/* ---- palette ---- */
+function pxPal(sp) {
+  const skin = sp.skin || '#ffe4d2', hair = sp.hair || '#333333', dark = lumHex(hair) < 0.16;
+  const sh = (h, k) => shadeHex(h, k);
+  return {
+    skin: { b: skin, s: mixHex(skin, '#e08a7a', 0.3), o: mixHex(skin, '#5a2228', 0.66) },
+    hair: { b: hair, s: dark ? mixHex(hair, '#3a3a58', 0.5) : sh(hair, -0.24), o: dark ? '#0b0a10' : sh(hair, -0.58), l: dark ? mixHex(hair, '#8a98c8', 0.45) : sh(hair, 0.38) },
+    cloth: { b: sp.cloth, s: sh(sp.cloth, -0.24), o: sh(sp.cloth, -0.6), l: sh(sp.cloth, 0.22) },
+    cloth2: { b: sp.cloth2, s: sh(sp.cloth2, -0.16), o: sh(sp.cloth2, -0.55) },
+    obi: { b: sp.obi || sh(sp.cloth, -0.4), s: sh(sp.obi || sh(sp.cloth, -0.4), -0.25), o: sh(sp.obi || sh(sp.cloth, -0.4), -0.6) },
+    eye: { k: '#2a171c', I: sp.eye || '#6a4a2a', i: sh(sp.eye || '#6a4a2a', -0.38), J: sh(sp.eye || '#6a4a2a', 0.42), W: '#ffffff', e: '#fff8f4' },
+  };
 }
-function mouthSvg(m, sp) {
-  switch (m) {
-    case 'grin': return `<path d="M89,130 Q100,145 111,130 Q100,134 89,130 Z" fill="#a8323a" stroke="#5a1a1a" stroke-width="1.2"/><path d="M93,138 Q100,142 107,138 Q100,136 93,138 Z" fill="#f08a8a"/>${sp.fang ? '<path d="M95,131 l2,4 l2,-3.6 Z" fill="#fff"/>' : ''}`;
-    case 'smile': return '<path d="M91,132 Q100,140 109,132" fill="none" stroke="#7a3030" stroke-width="2" stroke-linecap="round"/>';
-    case 'small': return '<path d="M95,134 Q100,137 105,134" fill="none" stroke="#7a3030" stroke-width="1.8" stroke-linecap="round"/>';
-    case 'flat': return '<path d="M94,135 L106,135" stroke="#7a3030" stroke-width="1.8" stroke-linecap="round"/>';
-    case 'smirk': return '<path d="M93,135 Q102,138 109,131" fill="none" stroke="#7a3030" stroke-width="2" stroke-linecap="round"/>';
-    case 'open': return '<ellipse cx="100" cy="136" rx="5" ry="6" fill="#a8323a" stroke="#5a1a1a" stroke-width="1.2"/>';
-    case 'frown': return '<path d="M92,138 Q100,132 108,138" fill="none" stroke="#7a3030" stroke-width="2" stroke-linecap="round"/>';
-    case 'shout': return '<path d="M88,129 Q100,150 112,129 Z" fill="#8a2a30" stroke="#3a0a0a" stroke-width="1.4"/>';
-    default: return '';
+const P_FIX = {
+  red: { b: '#e0283c', s: '#b01e30', o: '#5a0a14', l: '#ff6a78' }, gold: { b: '#e8b838', s: '#b88a20', o: '#6a4a10', l: '#fff0a0' },
+  navy: { b: '#2c2f48', s: '#1e2034', o: '#0c0c18', l: '#4a4e70' }, metal: { b: '#b8c2ce', s: '#8a94a4', o: '#3a4050', l: '#eef2f8' },
+  white: { b: '#f6f2ea', s: '#d8d0c2', o: '#7a7060', l: '#ffffff' }, black: { b: '#24222a', s: '#16141a', o: '#060508', l: '#4a4856' },
+  straw: { b: '#d2b06a', s: '#a8884a', o: '#5a4420', l: '#f0d898' }, darkred: { b: '#5a1a24', s: '#3e1018', o: '#16060a', l: '#8a2a38' },
+  pink: { b: '#ff9cbc', s: '#e0708e', o: '#8a2a4a', l: '#ffd0e0' }, brick: { b: '#8a3a2a', s: '#6a2a1e', o: '#2a0e08', l: '#b0584a' },
+  hood: { b: '#3a3f58', s: '#2a2e42', o: '#10121c', l: '#585e7a' }, pate: null,
+};
+/* ---- bodies ---- */
+function drawBody(B, sp, P) {
+  const male = sp.g === 'm';
+  const neck = mRect(mk(), 21, 32, 28, 40); if (sp.g !== 'm') mCut(neck, (x) => x === 21 || x === 28); paint(B, neck, P.skin, { shade: false }); fill(B, mRect(mk(), 22, 35, 27, 37), P.skin.s);
+  if (sp.sokutai) {
+    const t = mPoly(mk(), [[1, 60], [4, 45], [11, 40], [38, 40], [45, 45], [48, 60]]); paint(B, t, P.cloth, { openBottom: true, shadeR: true });
+    const col = mSub(mEll(mk(), 24.5, 40, 9, 4.5), mEll(mk(), 24.5, 39.5, 5.5, 2.6)); paint(B, col, P.cloth2, { shade: false });
+    line(B, 11, 47, 9, 59, P.cloth.s); line(B, 38, 47, 40, 59, P.cloth.s); return;
   }
-}
-function backHair(sp, id) {
-  const f = `url(#${id}h)`, s = `stroke="${shadeHex(sp.hair, -0.45)}" stroke-width="1.5"`;
-  switch (sp.back) {
-    case 'long': return `<path d="M50,96 C42,56 70,34 100,34 C130,34 158,56 150,96 L162,226 Q130,236 100,232 Q70,236 38,226 Z" fill="${f}" ${s}/>`;
-    case 'wavy': return `<path d="M50,96 C42,56 70,34 100,34 C130,34 158,56 150,96 C158,130 150,150 160,176 C168,200 152,214 160,232 L40,232 C48,214 32,200 40,176 C50,150 42,130 50,96 Z" fill="${f}" ${s}/>`;
-    case 'pony': return `<path d="M52,98 C46,58 72,36 100,36 C128,36 154,58 148,98 L150,128 Q100,138 50,128 Z" fill="${f}" ${s}/><path d="M138,46 C176,40 188,90 176,140 C170,168 160,182 150,196 C158,160 160,120 146,92 Z" fill="${f}" ${s}/>`;
-    case 'short': return `<path d="M52,100 C46,58 72,36 100,36 C128,36 154,58 148,100 L148,138 Q100,146 52,138 Z" fill="${f}" ${s}/>`;
-    case 'tied': return `<path d="M54,98 C48,58 74,38 100,38 C126,38 152,58 146,98 L146,120 Q100,128 54,120 Z" fill="${f}" ${s}/><path d="M118,40 C150,30 166,60 160,96 C156,112 150,126 144,134 C146,110 144,86 130,64 Z" fill="${f}" ${s}/>`;
-    case 'topknot': return `<path d="M56,96 C52,60 74,42 100,42 C126,42 148,60 144,96 L144,112 Q100,118 56,112 Z" fill="${f}" ${s}/><rect x="92" y="24" width="16" height="24" rx="6" fill="${f}" ${s}/>`;
-    case 'bun': return `<circle cx="100" cy="34" r="20" fill="${f}" ${s}/><path d="M52,100 C46,58 72,38 100,38 C128,38 154,58 148,100 L148,120 Q100,128 52,120 Z" fill="${f}" ${s}/>`;
-    default: return '';
-  }
-}
-function bangsSvg(sp, id, hairD) {
-  const f = `url(#${id}h)`, s = `stroke="${hairD}" stroke-width="1.4" stroke-linejoin="round"`;
-  const shine = '<path d="M72,56 Q100,44 128,56" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="3" stroke-linecap="round"/>';
-  let d = '', extra = '';
-  switch (sp.bangs) {
-    case 'spiky': d = 'M54,94 C50,58 74,38 100,38 C128,38 152,58 146,96 L140,80 L134,92 L126,72 L118,90 L108,68 L100,88 L90,70 L82,90 L72,74 L64,94 Z'; break;
-    case 'hime': return `<path d="M54,96 C50,56 76,38 100,38 C124,38 150,56 146,96 L146,84 L54,84 Z" fill="${f}" ${s}/><path d="M54,84 L52,150 Q58,156 66,150 L66,86 Z" fill="${f}" ${s}/><path d="M146,84 L148,150 Q142,156 134,150 L134,86 Z" fill="${f}" ${s}/>${shine}`;
-    case 'side': d = 'M54,96 C50,58 76,38 102,38 C130,38 152,60 146,100 C140,82 124,72 106,76 C92,79 78,90 64,104 Z'; extra = `<path d="M54,96 C50,120 52,140 60,158 C62,138 62,118 64,104 Z" fill="${f}" ${s}/>`; break;
-    case 'short': d = 'M56,92 C54,60 76,40 100,40 C126,40 148,60 144,92 L136,78 L128,90 L118,74 L108,88 L96,72 L86,90 L74,76 L64,94 Z'; break;
-    case 'male': d = 'M56,90 C54,56 78,40 100,40 C124,40 146,56 144,90 L136,74 L124,84 L110,70 L96,82 L82,72 L70,84 L62,78 Z'; break;
-    case 'messy': d = 'M54,88 C48,52 76,32 100,34 C126,32 154,52 146,90 L150,72 L138,80 L140,62 L124,74 L118,56 L106,72 L96,54 L88,72 L76,58 L72,78 L58,70 Z'; break;
-    case 'sakayaki': return `<path d="M60,76 C64,52 82,44 100,44 C118,44 136,52 140,76 Q100,66 60,76 Z" fill="#c4ced2"/><path d="M57,96 C55,80 59,74 64,76 L64,98 Z M143,96 C145,80 141,74 136,76 L136,98 Z" fill="${f}"/>`;
-    default: return '';
-  }
-  return `<path d="${d}" fill="${f}" ${s}/>${extra}${shine}`;
-}
-function bodySvg(sp) {
-  const c = sp.cloth, c2 = sp.cloth2, cd = shadeHex(c, -0.3);
-  let o = `<path d="M18,240 C24,200 54,184 86,176 L114,176 C146,184 176,200 182,240 Z" fill="${c}" stroke="${cd}" stroke-width="1.5"/>`;
-  if (sp.sokutai) o += `<path d="M10,240 C14,196 50,180 100,178 C150,180 186,196 190,240 Z" fill="${c}" stroke="${cd}" stroke-width="1.5"/><path d="M70,182 Q100,200 130,182 L124,178 Q100,192 76,178 Z" fill="${c2}"/>`;
-  else o += `<path d="M86,176 L100,218 L114,176 L108,174 L100,196 L92,174 Z" fill="${c2}"/><path d="M80,178 L100,232 L120,178" fill="none" stroke="${cd}" stroke-width="2"/>`;
-  if (sp.kamishimo) o += `<path d="M16,214 L74,180 L86,176 L78,198 Z" fill="${c}" stroke="${cd}" stroke-width="1.5"/><path d="M184,214 L126,180 L114,176 L122,198 Z" fill="${c}" stroke="${cd}" stroke-width="1.5"/>`;
-  if (sp.obi) o += `<path d="M42,226 Q100,234 158,226 L160,240 L40,240 Z" fill="${sp.obi}"/>`;
+  const torso = mPoly(mk(), male ? [[3, 60], [6, 45], [11, 40], [19, 38], [30, 38], [38, 40], [43, 45], [46, 60]] : [[5, 60], [8, 46], [12, 41], [19, 38], [30, 38], [37, 41], [41, 46], [44, 60]]);
+  paint(B, torso, sp.armor ? P_FIX.black : P.cloth, { openBottom: true, shadeR: true, lightTL: true });
+  line(B, male ? 11 : 12, 47, male ? 9 : 11, 59, (sp.armor ? P_FIX.black : P.cloth).s); line(B, male ? 38 : 37, 47, male ? 40 : 38, 59, (sp.armor ? P_FIX.black : P.cloth).s);
   if (sp.armor) {
-    o += '<path d="M18,240 C20,214 34,200 56,192 L70,236 Z" fill="#2a2a34" stroke="#111" stroke-width="1.5"/><path d="M182,240 C180,214 166,200 144,192 L130,236 Z" fill="#2a2a34" stroke="#111" stroke-width="1.5"/>';
-    for (let k = 0; k < 3; k++) o += `<path d="M${24 + k * 4},${214 + k * 8} L${62 - k},${206 + k * 9}" stroke="#a83a3a" stroke-width="2"/><path d="M${176 - k * 4},${214 + k * 8} L${138 + k},${206 + k * 9}" stroke="#a83a3a" stroke-width="2"/>`;
+    for (let y = 46; y < 60; y += 3) line(B, 9, y, 40, y, '#a8303a', torso);
+    for (const sx of [0, 1]) { const pl = mPoly(mk(), sx ? mir([[2, 41], [12, 40], [13, 53], [3, 55]]) : [[2, 41], [12, 40], [13, 53], [3, 55]]); paint(B, pl, P_FIX.black, { shade: false }); for (let y = 43; y < 54; y += 3) line(B, sx ? 37 : 3, y, sx ? 46 : 12, y, '#a8303a', pl); }
   }
-  if (sp.crest) o += `<circle cx="60" cy="212" r="7" fill="none" stroke="${c2}" stroke-width="1.6"/><circle cx="60" cy="212" r="2.4" fill="${c2}"/>`;
-  return o;
+  const vo = mPoly(mk(), [[18, 38], [25, male ? 49 : 52], [32, 38]]), vi = mPoly(mk(), [[21, 38], [25, male ? 44 : 47], [29, 38]]);
+  paint(B, mSub(vo, vi), P.cloth2, { shade: false }); fill(B, vi, P.skin.s);
+  line(B, 25, male ? 49 : 52, 25, 59, (sp.armor ? P_FIX.black : P.cloth).o);
+  if (!male || sp.obi) { const obi = mAnd(mRect(mk(), 0, 51, 49, 55), torso); paint(B, obi, P.obi, { shade: false }); line(B, 8, 53, 41, 53, mixHex(P.obi.b, '#ffffff', 0.45), obi); dot(B, 25, 53, P.cloth2.b); }
+  if (sp.kamishimo) { for (const s of [0, 1]) { const w = mPoly(mk(), s ? mir([[1, 41], [14, 38], [17, 46], [3, 47]]) : [[1, 41], [14, 38], [17, 46], [3, 47]]); paint(B, w, P.cloth, { shade: false }); } }
+  if (sp.crest) { const c = mEll(mk(), 13.5, 47.5, 2.2, 2.2); paint(B, c, P.cloth2, { shade: false }); dot(B, 13, 47, P.cloth2.o); }
 }
-function accBack(sp, id) {
-  const has = (a) => sp.acc.includes(a);
-  let o = '';
-  if (has('hood')) o += '<path d="M42,112 C34,50 66,22 100,22 C134,22 166,50 158,112 L152,156 Q100,166 48,156 Z" fill="#3a3f55" stroke="#22253a" stroke-width="1.5"/>';
-  if (has('zukin')) o += '<path d="M44,110 C36,50 66,24 100,24 C134,24 164,50 156,110 L152,160 Q100,170 48,160 Z" fill="#ece4d4" stroke="#b8ad98" stroke-width="1.5"/>';
-  return o;
-}
-function accFront(sp, hairD, opt) {
-  const has = (a) => sp.acc.includes(a);
-  let o = '';
-  if (has('ribbon')) o += '<g transform="translate(142,48) rotate(18)"><path d="M0,0 L-24,-13 L-21,13 Z" fill="#e0283c" stroke="#8a1020" stroke-width="1.2"/><path d="M0,0 L24,-13 L21,13 Z" fill="#e0283c" stroke="#8a1020" stroke-width="1.2"/><circle r="5.5" fill="#b01e2e"/></g>';
-  if (has('glasses')) o += '<g fill="#bfe0ff" fill-opacity=".14" stroke="#3a3a4a" stroke-width="2.2"><rect x="64" y="92" width="32" height="24" rx="9"/><rect x="104" y="92" width="32" height="24" rx="9"/></g><path d="M96,102 Q100,99 104,102" fill="none" stroke="#3a3a4a" stroke-width="2"/><path d="M69,97 L77,95 M109,97 L117,95" stroke="#fff" stroke-opacity=".75" stroke-width="2" stroke-linecap="round"/>';
-  if (has('kanzashi')) {
-    o += '<path d="M126,52 L158,36" stroke="#c99a2a" stroke-width="3" stroke-linecap="round"/><g transform="translate(132,48)">';
-    for (let k = 0; k < 5; k++) { const a = k * 72 * Math.PI / 180; o += `<circle cx="${(Math.cos(a) * 6).toFixed(1)}" cy="${(Math.sin(a) * 6).toFixed(1)}" r="5" fill="#ff9cbc"/>`; }
-    o += '<circle r="3" fill="#f6d050"/></g><path d="M152,40 l0,16 M156,38 l0,13" stroke="#c99a2a" stroke-width="1.2"/><circle cx="152" cy="58" r="2.6" fill="#e04a6a"/><circle cx="156" cy="53" r="2.2" fill="#e04a6a"/>';
+/* ---- main ---- */
+function pxRender(sp, expr) {
+  const B = new Array(PXW * PXH).fill(null), P = pxPal(sp), acc = sp.acc || [], has = (a) => acc.includes(a);
+  const male = sp.g === 'm', unmask = expr === 'unmask';
+  const H = (HAIR[sp.px] || HAIR[sp.bangs] || HAIR.male)();
+  if (!HAIR[sp.px] && sp.back && BACKS[sp.back]) { mOr(H.back, BACKS[sp.back]()); if (sp.back === 'long' || sp.back === 'wavy') mOr(H.back, DOME()); }
+  // aura
+  if (sp.aura) for (let y = 0; y < PXH; y++) for (let x = 0; x < PXW; x++) { const d = Math.hypot((x + 0.5 - 25) / 25, (y + 0.5 - 30) / 30); if (d < 0.78 || (d < 0.98 && (x + y) % 2 === 0)) B[y * PXW + x] = mixHex(sp.aura, '#ffffff', d < 0.6 ? 0.55 : 0.3); }
+  const hood = has('hood') || has('zukin');
+  if (hood) paint(B, mEll(mk(), 24.5, 22, 19, 19), has('zukin') ? P_FIX.white : P_FIX.hood, { shadeR: true });
+  else paint(B, H.back, P.hair, { shadeR: true });
+  drawBody(B, sp, P);
+  if (!hood && (male || sp.bangs === 'male' || sp.bangs === 'sakayaki')) { glyph(B, EAR, 10, 21, { q: P.skin.o, S: P.skin.b, s: P.skin.s }); glyph(B, EAR, 37, 21, { q: P.skin.o, S: P.skin.b, s: P.skin.s }, true); }
+  glyph(B, FACE_ROWS, FACE_X, FACE_Y, { q: P.skin.o, S: P.skin.b });
+  for (let y = 24; y < 36; y++) for (let x = 13; x < 37; x++) { if (B[y * PXW + x] !== P.skin.b) continue; const rq = B[y * PXW + x + 1] === P.skin.o, dq = B[(y + 1) * PXW + x] === P.skin.o; if ((rq && x > 30) || (dq && x > 24)) B[y * PXW + x] = P.skin.s; }
+  dot(B, 25, 28, P.skin.s);
+  // front hair (or shaved pate) + shadow it casts on the face
+  let frontMask = H.front;
+  if (hood) { const fr = mSub(mEll(mk(), 24.5, 23, 17.5, 17), mEll(mk(), 24.5, 24.5, 12, 5.2)); paint(B, fr, has('zukin') ? P_FIX.white : P_FIX.hood, { shadeR: true }); frontMask = fr; }
+  else {
+    if (H.pate) { const ps = mixHex(P.skin.b, '#9fb4d0', 0.4); paint(B, H.pate, { b: ps, s: shadeHex(ps, -0.1), o: P.skin.o, l: mixHex(ps, '#ffffff', 0.4) }, { lightTL: true }); }
+    paint(B, H.front, P.hair, { shadeR: true });
+    for (let y = 3; y < 9; y++) for (let x = 0; x < PXW; x++) { if (!mIn(H.front, x, y) || B[y * PXW + x] !== P.hair.b) continue; const d = Math.hypot((x + 0.5 - 24.5) / 13, (y + 0.5 - 15) / 10); if (Math.abs(d - 1) < 0.14 && x % 7 !== 0) B[y * PXW + x] = P.hair.l; }
+    for (const [x0, y0, x1, y1] of H.strands || []) line(B, x0, y0, x1, y1, P.hair.s, H.front);
+    if (sp.back === 'topknot' && !HAIR[sp.px]) { paint(B, mPoly(mk(), [[20, 6], [21, 1], [28, 1], [30, 6]]), P.hair, { lightTL: true }); line(B, 21, 4, 29, 4, '#f4f0e6'); }
   }
-  if (has('headband')) o += '<path d="M54,80 Q100,68 146,80 L146,90 Q100,78 54,90 Z" fill="#2c2f45"/><rect x="86" y="72" width="28" height="12" rx="2" fill="#aeb6c2" stroke="#555" stroke-width="1"/><path d="M146,82 L170,96 L162,100 L146,88 Z" fill="#2c2f45"/>';
-  if (has('hachimaki')) o += '<path d="M54,80 Q100,70 146,80 L146,88 Q100,78 54,88 Z" fill="#f4f1ea" stroke="#c9c2b2" stroke-width="1"/><path d="M146,82 L166,74 L162,90 Z M146,84 L170,94 L158,98 Z" fill="#f4f1ea" stroke="#c9c2b2" stroke-width="1"/>';
-  if (has('bandana')) o += `<path d="M52,84 C50,50 76,34 100,34 C124,34 150,50 148,84 Q100,70 52,84 Z" fill="#8a3a2a" stroke="#5a2018" stroke-width="1.4"/><path d="M52,80 L34,92 L40,98 L54,88 Z" fill="#8a3a2a"/>`;
-  if (has('jingasa')) o += '<path d="M40,66 L100,30 L160,66 Q100,78 40,66 Z" fill="#2c2a28" stroke="#111" stroke-width="1.4"/><circle cx="100" cy="52" r="5" fill="#c8a040"/>';
-  if (has('eboshi')) o += '<path d="M72,48 C70,12 130,6 132,42 Q100,32 72,48 Z" fill="#1c1c1c"/>';
-  if (has('kanmuri')) o += '<path d="M70,56 C70,30 130,30 130,56 Q100,48 70,56 Z" fill="#141414"/><path d="M96,36 C96,10 112,-4 122,-2 C114,8 108,22 106,40 Z" fill="#141414"/>';
-  if (has('kabuto')) o += `<path d="M46,94 C44,44 72,22 100,22 C128,22 156,44 154,94 L144,90 C140,58 124,44 100,44 C76,44 60,58 56,90 Z" fill="${sp.dark ? '#1a1a22' : '#3a3a44'}" stroke="#111" stroke-width="1.5"/><path d="M46,94 L30,104 L40,112 L58,96 Z M154,94 L170,104 L160,112 L142,96 Z" fill="${sp.dark ? '#2a1a2a' : '#4a4a54'}"/><path d="M84,30 Q100,6 116,30 Q100,22 84,30 Z" fill="${sp.dark ? '#a01a2a' : '#d9b040'}"/>`;
-  if (has('darkkabuto')) o += '<path d="M44,96 C42,42 72,18 100,18 C128,18 158,42 156,96 L146,92 C142,56 126,40 100,40 C74,40 58,56 54,92 Z" fill="#14121a" stroke="#000" stroke-width="1.5"/><path d="M74,34 C56,14 44,-4 28,-12 C44,14 56,30 64,46 Z M126,34 C144,14 156,-4 172,-12 C156,14 144,30 136,46 Z" fill="#3a0a1a" stroke="#000" stroke-width="1.2"/><path d="M90,30 L100,12 L110,30 Z" fill="#c01a2a"/><path d="M44,96 L26,110 L38,118 L58,98 Z M156,96 L174,110 L162,118 L142,98 Z" fill="#241a2a"/>';
-  if (has('misu') && !opt.unmask) {
-    o += '<g opacity=".93"><rect x="34" y="24" width="132" height="104" fill="#c8a860"/>';
-    for (let y = 28; y < 128; y += 5) o += `<path d="M34,${y} L166,${y}" stroke="#8a6a30" stroke-width="1.2"/>`;
-    o += '<rect x="34" y="20" width="132" height="10" fill="#6a2a1a"/><path d="M60,30 L60,60 M140,30 L140,60" stroke="#b03030" stroke-width="3"/><circle cx="60" cy="64" r="4" fill="#b03030"/><circle cx="140" cy="64" r="4" fill="#b03030"/></g>';
-  }
-  return o;
-}
-function portrait(spIn, expr = 'normal', opt = {}) {
-  const sp = { g: 'f', skin: '#f9e2cf', hair: '#333333', eye: '#6a8a44', eyeShape: 'round', brow: 'normal', mouth: 'smile', bangs: 'side', back: 'long', acc: [], cloth: '#b44444', cloth2: '#f4ecd8', ...spIn };
-  const id = 'pt' + (++PID), hairD = shadeHex(sp.hair, -0.35), skinD = shadeHex(sp.skin, -0.12), line = '#3a2626';
-  let mouth = sp.mouth, brow = sp.brow, blush = !!sp.blush;
-  if (expr === 'happy' || expr === 'joy') mouth = sp.g === 'm' ? 'smile' : (sp.mouth === 'flat' ? 'smile' : 'grin');
+  for (let y = FACE_Y; y < PXH; y++) for (let x = 0; x < PXW; x++) { if (!mIn(faceMask, x, y) || B[y * PXW + x] !== P.skin.b) continue; if (mIn(frontMask, x, y - 1) || mIn(frontMask, x - 1, y) || mIn(frontMask, x + 1, y)) B[y * PXW + x] = P.skin.s; }
+  // eyes & mouth
+  let es = sp.eyeShape || (male ? 'male' : 'round');
+  if (!PEYES[es]) es = male ? 'male' : 'round';
+  let mouth = sp.mouth || 'smile', brow = null, blush = !!sp.blush;
+  if (expr === 'happy' || expr === 'joy') { mouth = male ? 'smile' : sp.fang ? 'fang' : sp.mouth === 'flat' ? 'smile' : 'grin'; if (!male && es !== 'sharp') es = 'happy'; else if (male && es === 'male') es = 'mhappy'; }
   if (expr === 'angry') { brow = 'angry'; mouth = sp.mouth === 'grin' ? 'shout' : 'frown'; }
   if (expr === 'sad') { brow = 'sad'; mouth = 'frown'; }
-  if (expr === 'blush') { blush = true; mouth = sp.mouth === 'grin' ? 'smile' : sp.mouth === 'flat' ? 'small' : sp.mouth; }
-  if (expr === 'surprise') { mouth = 'open'; brow = 'up'; }
-  const unmask = opt.unmask || expr === 'unmask';
-  if (expr === 'unmask') { blush = true; mouth = 'small'; }
-  const masked = sp.acc.includes('mask') && !unmask;
-  const P = [];
-  P.push(`<defs><linearGradient id="${id}i" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${shadeHex(sp.eye, -0.55)}"/><stop offset=".55" stop-color="${sp.eye}"/><stop offset="1" stop-color="${shadeHex(sp.eye, 0.45)}"/></linearGradient><linearGradient id="${id}h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${shadeHex(sp.hair, 0.22)}"/><stop offset="1" stop-color="${sp.hair}"/></linearGradient>${sp.aura ? `<radialGradient id="${id}a"><stop offset="0" stop-color="${sp.aura}" stop-opacity=".9"/><stop offset="1" stop-color="${sp.aura}" stop-opacity="0"/></radialGradient>` : ''}</defs>`);
-  if (sp.aura) P.push(`<circle cx="100" cy="120" r="118" fill="url(#${id}a)"/>`);
-  P.push(accBack(sp, id), backHair(sp, id), bodySvg(sp));
-  P.push(`<path d="M88,136 L88,180 Q100,188 112,180 L112,136 Z" fill="${skinD}"/>`);
-  const face = sp.g === 'm' ? 'M58,90 C58,56 78,44 100,44 C122,44 142,56 142,90 C142,118 134,136 118,150 Q100,160 82,150 C66,136 58,118 58,90 Z' : 'M58,92 C58,58 78,46 100,46 C122,46 142,58 142,92 C142,122 128,140 112,150 Q100,157 88,150 C72,140 58,122 58,92 Z';
-  P.push(`<ellipse cx="57" cy="102" rx="6" ry="9" fill="${sp.skin}" stroke="${line}" stroke-opacity=".25"/><ellipse cx="143" cy="102" rx="6" ry="9" fill="${sp.skin}" stroke="${line}" stroke-opacity=".25"/>`);
-  P.push(`<path d="${face}" fill="${sp.skin}" stroke="${line}" stroke-opacity=".35" stroke-width="1.2"/>`);
-  P.push(`<path d="M62,80 Q100,92 138,80 L138,88 Q100,100 62,88 Z" fill="${skinD}" opacity=".45"/>`);
-  if (blush) P.push('<ellipse cx="74" cy="122" rx="10" ry="5" fill="#ff7c8a" opacity=".45"/><ellipse cx="126" cy="122" rx="10" ry="5" fill="#ff7c8a" opacity=".45"/><path d="M68,120 l4,-4 M73,121 l4,-4 M122,121 l4,-4 M127,120 l4,-4" stroke="#ff6070" stroke-width="1" opacity=".6"/>');
-  P.push(eyeSvg(80, 104, false, sp, id, expr), eyeSvg(120, 104, true, sp, id, expr));
-  const bd = BROWS[brow] || BROWS.normal, bw = sp.g === 'm' || brow === 'thick' ? 3.6 : 2.4;
-  P.push(`<path d="${bd}" transform="translate(80,104)" fill="none" stroke="${hairD}" stroke-width="${bw}" stroke-linecap="round"/><path d="${bd}" transform="translate(120,104) scale(-1,1)" fill="none" stroke="${hairD}" stroke-width="${bw}" stroke-linecap="round"/>`);
-  if (!masked && !sp.acc.includes('menpo')) { P.push(`<path d="M100.5,118.5 l-1.6,3.6" fill="none" stroke="${shadeHex(sp.skin, -0.22)}" stroke-width="1.5" stroke-linecap="round" opacity=".75"/>`); P.push(mouthSvg(mouth, sp)); }
-  const has = (a) => sp.acc.includes(a);
-  if (has('mole')) P.push('<circle cx="129" cy="117" r="1.6" fill="#4a2a2a"/>');
-  if (has('scar')) P.push('<path d="M118,92 L132,124" stroke="#a5524a" stroke-width="2.2" stroke-linecap="round"/>');
-  if (has('beard')) P.push(`<path d="M76,132 Q80,160 100,166 Q120,160 124,132 Q112,146 100,146 Q88,146 76,132 Z" fill="${hairD}"/>`);
-  if (has('mustache')) P.push(`<path d="M86,128 Q93,123 100,127 Q107,123 114,128 Q107,131 100,129 Q93,131 86,128 Z" fill="${hairD}"/>`);
-  if (masked) P.push('<path d="M60,114 Q100,124 140,114 L140,128 Q132,150 112,156 Q100,160 88,156 Q68,150 60,128 Z" fill="#2c2f45" stroke="#1a1c2a" stroke-width="1.2"/><path d="M70,122 Q100,130 130,122" stroke="#454a66" stroke-width="1.5" fill="none"/>');
-  if (has('menpo')) P.push('<path d="M64,116 Q100,126 136,116 L132,146 Q100,166 68,146 Z" fill="#5a1a22" stroke="#2a0a10" stroke-width="2"/><path d="M76,130 L92,136 M108,136 L124,130 M84,146 L92,140 M116,146 L108,140" stroke="#e8c070" stroke-width="2"/>');
-  if (has('hood')) P.push('<path d="M60,116 Q100,128 140,116 L136,138 Q100,152 64,138 Z" fill="#4a5070" stroke="#2a2f45" stroke-width="1.2"/><path d="M92,116 Q100,108 108,116 Q100,124 92,116 Z" fill="#5a6080" stroke="#2a2f45"/>');
-  if (has('zukin')) P.push('<path d="M58,114 Q100,124 142,114 L140,150 Q100,170 60,150 Z" fill="#ece4d4" stroke="#b8ad98" stroke-width="1.4"/>');
-  P.push(bangsSvg(sp, id, hairD));
-  P.push(accFront(sp, hairD, { unmask }));
-  return `<svg class="pt" viewBox="${opt.vb || '0 0 200 240'}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${P.join('')}</svg>`;
+  if (expr === 'surprise') { brow = 'up'; mouth = 'open'; if (!male) es = 'surprise'; }
+  if (expr === 'blush') { blush = true; mouth = sp.mouth === 'grin' ? 'smile' : sp.mouth === 'flat' ? 'small' : mouth; }
+  if (unmask) { blush = true; mouth = 'small'; }
+  if (sp.fang && mouth === 'grin') mouth = 'fang';
+  const em = { ...P.eye }; if (sp.glow) { em.W = '#ffe0e0'; em.e = '#ffd8d8'; }
+  const ey = 19;
+  glyph(B, PEYES[es], 13, ey, em); glyph(B, PEYES[es], 28, ey, em, true);
+  if (sp.glow) { dot(B, 12, ey + 6, '#ff3040'); dot(B, 37, ey + 6, '#ff3040'); }
+  if (blush || !male) for (let x = 0; x < 4; x++) { const c = blush ? '#ff94aa' : '#ffcdd0'; if (blush || (x > 0 && x < 3)) { dot(B, 13 + x, 30, c); dot(B, 33 + x, 30, c); } }
+  if (expr === 'sad') { dot(B, 21, 29, '#9ad0ff'); dot(B, 21, 30, '#9ad0ff'); }
+  const masked = has('mask') && !unmask;
+  if (!masked && !has('menpo') && !hood) glyph(B, PMOUTHS[mouth] || PMOUTHS.smile, 22, 31, { k: '#8a3038', R: '#c8404a', P: '#ff8a9a', W: '#ffffff' });
+  if (has('mole')) dot(B, 34, 32, '#5a2a2a');
+  if (has('beard')) paint(B, mAnd(mPoly(mk(), [[13, 28], [18, 33], [25, 35], [31, 33], [36, 28], [37, 33], [33, 38], [25, 41], [16, 38], [12, 33]]), mOr(mk(), faceMask, mRect(mk(), 12, 33, 37, 41))), P.hair, { shade: false });
+  if (has('mustache')) { line(B, 19, 30, 23, 29, P.hair.o); line(B, 26, 29, 30, 30, P.hair.o); line(B, 20, 30, 23, 30, P.hair.o); line(B, 26, 30, 29, 30, P.hair.o); }
+  if (has('scar')) line(B, 31, 17, 35, 27, '#c05a52');
+  if (masked) { const m = mAnd(mRect(mk(), 10, 30, 39, 38), mOr(mk(), faceMask, mRect(mk(), 20, 33, 29, 38))); paint(B, m, { b: '#3a3f60', s: '#2c3050', o: '#12142a' }, { shade: false }); line(B, 15, 32, 34, 32, '#50567a', m); }
+  if (has('menpo')) { const m = mAnd(mRect(mk(), 10, 28, 39, 38), faceMask); paint(B, m, P_FIX.darkred, { shade: false }); for (let x = 18; x <= 31; x += 2) dot(B, x, 32, '#e8c070'); line(B, 15, 29, 19, 31, '#e8c070'); line(B, 34, 29, 30, 31, '#e8c070'); }
+  if (brow) for (const [x, y] of PBROWS[brow]) { dot(B, x, y, P.hair.o); dot(B, 49 - x, y, P.hair.o); if (brow === 'angry') { dot(B, x, y - 1, P.hair.o); dot(B, 49 - x, y - 1, P.hair.o); } }
+  // accessories
+  if (has('glasses')) { for (const x0 of [12, 27]) { const f = mSub(mRect(mk(), x0, 19, x0 + 10, 29), mRect(mk(), x0 + 1, 20, x0 + 9, 28)); fill(B, f, '#2a2a3c'); } dot(B, 14, 21, '#ffffff'); dot(B, 15, 21, '#ffffff'); dot(B, 34, 21, '#ffffff'); dot(B, 35, 21, '#ffffff'); line(B, 23, 22, 26, 22, '#2a2a3c'); }
+  if (has('headband')) { const b = mAnd(mRect(mk(), 8, 9, 41, 11), mOr(mk(), DOME(), mRect(mk(), 8, 9, 41, 11))); paint(B, b, P_FIX.navy, { shade: false }); paint(B, mRect(mk(), 19, 8, 30, 12), P_FIX.metal, { lightTL: true }); for (const t of [[[39, 9], [47, 11], [46, 14], [39, 12]], [[39, 11], [45, 17], [43, 18], [38, 12]]]) paint(B, mPoly(mk(), t), P_FIX.navy, { shade: false }); }
+  if (has('hachimaki')) { paint(B, mRect(mk(), 8, 10, 41, 12), P_FIX.white, { shade: false }); for (const t of [[[40, 10], [47, 7], [46, 11]], [[40, 12], [47, 15], [45, 16]]]) paint(B, mPoly(mk(), t), P_FIX.white, { shade: false }); }
+  if (has('bandana')) { paint(B, mPoly(mk(), [[8, 14], [9, 6], [16, 2], [33, 2], [40, 6], [41, 14], [33, 11], [16, 11]]), P_FIX.brick, { shadeR: true, lightTL: true }); paint(B, mPoly(mk(), [[9, 11], [2, 15], [4, 19], [10, 14]]), P_FIX.brick, { shade: false }); }
+  if (has('jingasa')) { paint(B, mPoly(mk(), [[0, 14], [24.5, 0], [49, 14], [43, 16], [6, 16]]), P_FIX.straw, { shadeR: true, lightTL: true }); for (let x = 6; x < 44; x += 5) line(B, 24, 2, x, 14, P_FIX.straw.s); }
+  if (has('eboshi')) paint(B, mPoly(mk(), [[17, 12], [16, 4], [19, 0], [30, 0], [33, 4], [32, 12]]), P_FIX.black, { lightTL: true });
+  if (has('kanmuri')) { paint(B, mPoly(mk(), [[17, 12], [18, 5], [31, 5], [32, 12]]), P_FIX.black, { lightTL: true }); paint(B, mPoly(mk(), [[27, 6], [34, 0], [36, 1], [30, 7]]), P_FIX.black, { shade: false }); }
+  if (has('kabuto') || has('darkkabuto')) {
+    const dk = has('darkkabuto') || sp.dark, pal = dk ? P_FIX.black : { b: '#4a4a58', s: '#34343e', o: '#101014', l: '#6a6a7a' };
+    paint(B, mPoly(mk(), [[7, 15], [8, 8], [14, 3], [24, 1], [35, 3], [41, 8], [42, 15]]), pal, { shadeR: true, lightTL: true });
+    paint(B, mRect(mk(), 6, 13, 43, 15), pal, { shade: false });
+    for (const s of [0, 1]) paint(B, mPoly(mk(), s ? mir([[6, 13], [1, 18], [3, 23], [10, 17]]) : [[6, 13], [1, 18], [3, 23], [10, 17]]), pal, { shade: false });
+    if (has('darkkabuto')) { for (const s of [0, 1]) paint(B, mPoly(mk(), s ? mir([[20, 6], [12, 0], [5, 0], [14, 3], [19, 9]]) : [[20, 6], [12, 0], [5, 0], [14, 3], [19, 9]]), P_FIX.red, { shade: false }); paint(B, mPoly(mk(), [[22, 9], [24.5, 4], [27, 9]]), P_FIX.red, { shade: false }); }
+    else { for (const s of [0, 1]) { line(B, s ? 25 : 24, 7, s ? 32 : 17, 0, P_FIX.gold.b); line(B, s ? 26 : 23, 7, s ? 33 : 16, 0, P_FIX.gold.s); } paint(B, mEll(mk(), 24.5, 8.5, 2.2, 2.2), dk ? P_FIX.red : P_FIX.gold, { shade: false }); }
+  }
+  if (sp.px === 'koharu' || has('ribbon')) { for (const t of [[[40, 8], [34, 4], [35, 12]], [[40, 8], [46, 4], [45, 12]]]) paint(B, mPoly(mk(), t), P_FIX.red, { lightTL: true }); paint(B, mRect(mk(), 39, 7, 41, 9), P_FIX.red, { shade: false }); dot(B, 40, 8, P_FIX.red.s); }
+  if (has('kanzashi')) { line(B, 38, 9, 46, 2, P_FIX.gold.b); line(B, 38, 10, 46, 3, P_FIX.gold.s); for (const [dx, dy] of [[0, -2], [2, -1], [2, 1], [-2, 1], [-2, -1]]) paint(B, mEll(mk(), 37.5 + dx, 8.5 + dy, 1.6, 1.6), P_FIX.pink, { shade: false }); dot(B, 37, 8, '#ffe070'); dot(B, 38, 8, '#ffe070'); line(B, 44, 4, 44, 9, P_FIX.gold.s); dot(B, 44, 10, '#e04a6a'); dot(B, 44, 11, '#e04a6a'); }
+  if (has('misu') && !unmask) { const m = mRect(mk(), 3, 0, 46, 40); fill(B, m, '#c8a860'); for (let y = 2; y <= 40; y += 2) line(B, 3, y, 46, y, '#9a7a3a'); paint(B, mRect(mk(), 2, 0, 47, 2), P_FIX.darkred, { shade: false }); for (const x of [12, 37]) { line(B, x, 3, x, 13, '#c03030'); paint(B, mEll(mk(), x + 0.5, 15, 1.8, 2), P_FIX.red, { shade: false }); } }
+  return B;
 }
+function pxURL(B, crop) {
+  const [cx, cy, cw, ch] = crop, cv2 = document.createElement('canvas'); cv2.width = cw; cv2.height = ch;
+  const g = cv2.getContext('2d'), id = g.createImageData(cw, ch);
+  for (let y = 0; y < ch; y++) for (let x = 0; x < cw; x++) { const c = B[(y + cy) * PXW + x + cx]; if (!c) continue; const [r, gg, b] = hexRGB(c), i = (y * cw + x) * 4; id.data[i] = r; id.data[i + 1] = gg; id.data[i + 2] = b; id.data[i + 3] = 255; }
+  g.putImageData(id, 0, 0); return cv2.toDataURL();
+}
+const PX_CROPS = { '48 36 104 104': [10, 8, 30, 30], '20 20 160 200': [3, 2, 44, 55], '30 30 140 150': [5, 2, 40, 43], '10 20 180 200': [2, 1, 45, 50] };
+function portrait(spIn, expr = 'normal', opt = {}) {
+  const sp = { acc: [], ...spIn }, vb = opt.vb || '', crop = PX_CROPS[vb] || [0, 0, PXW, PXH];
+  const ex = opt.unmask && (expr === 'normal' || expr === 'blush') ? 'unmask' : expr;
+  const key = JSON.stringify([sp, ex, crop, !!opt.unmask]);
+  let url = PX_CACHE.get(key);
+  if (!url) { const s2 = opt.unmask ? { ...sp, acc: sp.acc.filter((a) => a !== 'mask') } : sp; url = pxURL(pxRender(s2, ex), crop); PX_CACHE.set(key, url); }
+  return `<img class="pt px" src="${url}" alt="" draggable="false">`;
+}
+
 function beanSvg() {
   return '<svg viewBox="0 0 84 62" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><radialGradient id="bean" cx=".38" cy=".32" r=".8"><stop offset="0" stop-color="#fbe8bd"/><stop offset=".6" stop-color="#e7c587"/><stop offset="1" stop-color="#c79a55"/></radialGradient></defs><ellipse cx="42" cy="31" rx="38" ry="27" fill="url(#bean)" stroke="#a87a3a" stroke-width="2"/><path d="M30,44 Q42,50 54,44" fill="none" stroke="#8a5a28" stroke-width="3.5" stroke-linecap="round"/><ellipse cx="30" cy="20" rx="9" ry="5" fill="#fff" opacity=".55"/></svg>';
 }
@@ -931,19 +1043,19 @@ const HEROINES = {
   koharu: { name: '小春', yomi: 'こはる', kind: '元気なおてんば娘', role: '棟梁・源兵衛の娘', col: '#e0603a', bg: '#ffe0c4',
     catch: 'あたしに任せて！ 町じゅう走り回っちゃうよ！', st: { bu: 4, gi: 5, chi: 2, mi: 4 }, like: 'dango',
     skill: { name: '突貫普請', desc: (t) => `普請の速さ +${25 + t * 5}%・人の歩く速さ +${10 + t * 3}%`, fx: (m, t) => { m.build += 0.25 + t * 0.05; m.walk += 0.1 + t * 0.03; } },
-    sp: { hair: '#d9772e', eye: '#d08a1a', eyeShape: 'round', mouth: 'grin', fang: true, bangs: 'spiky', back: 'pony', acc: ['ribbon'], cloth: '#e0603a', cloth2: '#fbe9c8', obi: '#3a6aa8' } },
+    sp: { px: 'koharu', hair: '#d9772e', eye: '#d08a1a', eyeShape: 'round', mouth: 'grin', fang: true, bangs: 'spiky', back: 'pony', acc: ['ribbon'], cloth: '#e0603a', cloth2: '#fbe9c8', obi: '#3a6aa8' } },
   yukino: { name: '雪乃', yomi: 'ゆきの', kind: 'クールな眼鏡の勘定方', role: '家老・佐伯の姪', col: '#3a5a8a', bg: '#d8e4f4',
     catch: '……無駄は許しません。でも、あなたの夢には投資します。', st: { bu: 2, gi: 3, chi: 6, mi: 3 }, like: 'book',
     skill: { name: '算盤勘定', desc: (t) => `問屋の売値 +${20 + t * 5}%・年貢 +${20 + t * 5}%`, fx: (m, t) => { m.price += 0.2 + t * 0.05; m.tax += 0.2 + t * 0.05; } },
-    sp: { hair: '#27314d', eye: '#4a7ac8', eyeShape: 'sharp', mouth: 'flat', bangs: 'hime', back: 'long', acc: ['glasses'], cloth: '#3a5a8a', cloth2: '#eef2f6', obi: '#c0c8d8' } },
+    sp: { px: 'yukino', hair: '#27314d', eye: '#4a7ac8', eyeShape: 'sharp', mouth: 'flat', bangs: 'hime', back: 'long', acc: ['glasses'], cloth: '#3a5a8a', cloth2: '#eef2f6', obi: '#c0c8d8' } },
   chizuru: { name: '千鶴', yomi: 'ちづる', kind: '面倒見のいいお姉さん', role: '茶屋「千鳥屋」の女将', col: '#9a4a8a', bg: '#f6dcec',
     catch: 'うふふ、困ったらお姉さんに甘えていいのよ？', st: { bu: 2, gi: 3, chi: 4, mi: 6 }, like: 'sake',
     skill: { name: '町の姐さん', desc: (t) => `満足度 +${6 + t * 2}・移り住む人 +${1 + (t >= 2 ? 1 : 0)}人/日・食べる量 −10%`, fx: (m, t) => { m.happy += 6 + t * 2; m.imm += 1 + (t >= 2 ? 1 : 0); m.eat -= 0.1; } },
-    sp: { hair: '#6a2f45', eye: '#c0507a', eyeShape: 'tare', brow: 'soft', mouth: 'smile', bangs: 'side', back: 'wavy', acc: ['kanzashi', 'mole'], cloth: '#9a4a8a', cloth2: '#f4e4ec', obi: '#e8c060' } },
+    sp: { px: 'chizuru', hair: '#6a2f45', eye: '#c0507a', eyeShape: 'tare', brow: 'soft', mouth: 'smile', bangs: 'side', back: 'wavy', acc: ['kanzashi', 'mole'], cloth: '#9a4a8a', cloth2: '#f4e4ec', obi: '#e8c060' } },
   kaede: { name: '楓', yomi: 'かえで', kind: '無口なくノ一', role: '素性の知れぬ忍び', col: '#3a3f66', bg: '#dcdcec',
     catch: '……町は、私が守る。', st: { bu: 7, gi: 3, chi: 3, mi: 3 }, like: 'fish',
     skill: { name: '影働き', desc: (t) => `災いへの対処力 +${20 + t * 5}%・災いの被害 −${35 + t * 5}%`, fx: (m, t) => { m.power += 0.2 + t * 0.05; m.dmg -= 0.35 + t * 0.05; } },
-    sp: { hair: '#c9cdd8', eye: '#c03040', eyeShape: 'sharp', mouth: 'flat', bangs: 'short', back: 'tied', acc: ['mask', 'headband'], cloth: '#2a2f45', cloth2: '#8a2a3a', obi: '#8a2a3a' } },
+    sp: { px: 'kaede', hair: '#c9cdd8', eye: '#c03040', eyeShape: 'sharp', mouth: 'flat', bangs: 'short', back: 'tied', acc: ['mask', 'headband'], cloth: '#2a2f45', cloth2: '#8a2a3a', obi: '#8a2a3a' } },
 };
 const NPC = {
   me: { name: '', col: '#3e4f72', sp: { g: 'm', hair: '#2a2420', eye: '#6a4a2a', eyeShape: 'male', brow: 'thick', mouth: 'smile', bangs: 'messy', back: 'tied', acc: [], cloth: '#3e4f72', cloth2: '#f0e8d8', crest: true } },
