@@ -1,0 +1,4 @@
+{"koharu": {"ref": "normal", "names": ["happy", "blush", "angry", "sad", "surprise"], "hole": [117, 150, 54, 44]},
+ "yukino": {"ref": "normal", "names": ["happy", "blush", "angry", "sad", "surprise"], "hole": [133, 130, 60, 40]},
+ "chizuru": {"ref": "normal", "names": ["happy", "blush", "angry", "sad", "surprise"], "hole": [131, 122, 54, 38]},
+ "kaede": {"ref": "u_normal", "names": ["m_normal", "m_happy", "m_blush", "m_angry", "m_sad", "m_surprise", "u_happy"], "hole": [94, 120, 42, 32]}}
